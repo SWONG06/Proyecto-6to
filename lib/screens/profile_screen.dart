@@ -51,10 +51,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               children: [
-                Text('Perfil',
-                    style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 10),
-
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -64,7 +60,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         backgroundColor: Theme.of(context)
                             .colorScheme
                             .primary
-                            // ignore: deprecated_member_use
                             .withOpacity(.12),
                         child: Icon(Icons.person,
                             color: Theme.of(context).colorScheme.primary),
@@ -72,17 +67,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Text('Ana Garcia',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 18)),
-                              SizedBox(height: 4),
-                              Text(
-                                  'Gerente Financiero\nTecnologia Avanzada S.L.',
-                                  style: TextStyle(color: Colors.black54)),
-                            ]),
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ana Garcia',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
+                                  ?.copyWith(fontWeight: FontWeight.w700, fontSize: 18),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Gerente Financiero\nTecnologia Avanzada S.L.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withOpacity(0.7),
+                                  ),
+                            ),
+                          ],
+                        ),
                       ),
                     ]),
                   ),
@@ -116,14 +125,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const _SectionTitle('Preferencias'),
                 Card(
                   child: SwitchListTile(
-                    title: const Text("Modo oscuro",
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w500)),
+                    title: Text(
+                      "Modo oscuro",
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
                     value: isDark,
                     onChanged: widget.onThemeChanged,
                     secondary: Icon(
-                        isDark ? Icons.dark_mode : Icons.light_mode,
-                        color: Theme.of(context).colorScheme.primary),
+                      isDark ? Icons.dark_mode : Icons.light_mode,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   ),
                 ),
               ],
@@ -140,7 +154,10 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 12, 4, 6),
-      child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
     );
   }
 }
@@ -153,9 +170,23 @@ class _InfoTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Text(label, style: const TextStyle(color: Colors.black54)),
-      trailing: Text(value,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+      title: Text(
+        label,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.color
+                  ?.withOpacity(0.7),
+            ),
+      ),
+      trailing: Text(
+        value,
+        style: Theme.of(context)
+            .textTheme
+            .bodyLarge
+            ?.copyWith(fontWeight: FontWeight.w600, fontSize: 15),
+      ),
     );
   }
 }
