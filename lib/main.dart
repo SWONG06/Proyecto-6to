@@ -1,6 +1,11 @@
-import 'package:financecloud/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
-import 'profile_screen.dart'; // 👈 importa tu pantalla de perfil
+import 'utils/theme.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/add_transaction_screen.dart';
+import 'screens/transactions_screen.dart';
+import 'screens/reports_screen.dart';
+import 'screens/profile_screen.dart';
+import 'models/finance_models.dart';
 
 void main() {
   runApp(const FinanceCloudApp());
@@ -14,25 +19,71 @@ class FinanceCloudApp extends StatefulWidget {
 }
 
 class _FinanceCloudAppState extends State<FinanceCloudApp> {
-  ThemeMode _themeMode = ThemeMode.light; // 👈 inicia en modo claro
+  int _currentIndex = 0;
+  ThemeMode _themeMode = ThemeMode.system;
 
-  void _toggleTheme(bool isDark) {
-    setState(() {
-      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
-    });
-  }
+  final FinanceAppState _state = FinanceAppState.seed();
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Finance Cloud',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.light(useMaterial3: true),
-      darkTheme: ThemeData.dark(useMaterial3: true),
-      themeMode: _themeMode,
-      home: ProfileScreen(
+    final screens = [
+      DashboardScreen(state: _state),
+      AddTransactionScreen(
+        onSaved: (tx) => setState(() => _state.transactions.insert(0, tx)),
+      ),
+      TransactionsScreen(state: _state),
+      ReportsScreen(state: _state),
+      ProfileScreen(
         themeMode: _themeMode,
-        onThemeChanged: _toggleTheme,
+        onThemeChanged: (isDark) {
+          setState(() {
+            _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+          });
+        },
+      ),
+    ];
+
+    return MaterialApp(
+      title: 'FinanceCloud',
+      debugShowCheckedModeBanner: false,
+
+      theme: buildTheme(),       // claro
+      darkTheme: buildDarkTheme(), // oscuro
+      themeMode: _themeMode,       // 👈 controlado desde ProfileScreen
+
+      home: Scaffold(
+        body: SafeArea(child: screens[_currentIndex]),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: _currentIndex,
+          onDestinationSelected: (i) => setState(() => _currentIndex = i),
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Inicio',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.add_circle_outline),
+              selectedIcon: Icon(Icons.add_circle),
+              label: 'Agregar',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.receipt_long_outlined),
+              selectedIcon: Icon(Icons.receipt_long),
+              label: 'Transacciones',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.show_chart_outlined),
+              selectedIcon: Icon(Icons.show_chart),
+              label: 'Reportes',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
+              label: 'Perfil',
+            ),
+          ],
+        ),
       ),
     );
   }
