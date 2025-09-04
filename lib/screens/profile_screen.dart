@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final ThemeMode themeMode;
   final ValueChanged<bool> onThemeChanged;
 
@@ -11,8 +11,26 @@ class ProfileScreen extends StatelessWidget {
   });
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  bool _showLogo = true; // 👈 al inicio mostramos el logo
+
+  @override
+  void initState() {
+    super.initState();
+    // ⏳ después de 3 segundos ocultamos el logo
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        setState(() => _showLogo = false);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isDark = themeMode == ThemeMode.dark;
+    final isDark = widget.themeMode == ThemeMode.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -21,88 +39,102 @@ class ProfileScreen extends StatelessWidget {
           IconButton(
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             tooltip: isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro",
-            onPressed: () => onThemeChanged(!isDark),
+            onPressed: () => widget.onThemeChanged(!isDark),
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          // 🔹 Encabezado Perfil
-          Text('Perfil', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 10),
+      body: _showLogo
+          ? const Center(
+              child: CircleAvatar(
+                radius: 60,
+                child: Icon(Icons.person, size: 60),
+              ),
+            )
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              children: [
+                // 🔹 Encabezado Perfil
+                Text('Perfil',
+                    style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 10),
 
-          // 🔹 Tarjeta principal
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withValues(alpha: .12),
-                  child: Icon(Icons.person,
-                      color: Theme.of(context).colorScheme.primary),
+                // 🔹 Tarjeta principal
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(children: [
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            // ignore: deprecated_member_use
+                            .withOpacity(.12),
+                        child: Icon(Icons.person,
+                            color: Theme.of(context).colorScheme.primary),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text('Ana Garcia',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 18)),
+                              SizedBox(height: 4),
+                              Text(
+                                  'Gerente Financiero\nTecnologia Avanzada S.L.',
+                                  style: TextStyle(color: Colors.black54)),
+                            ]),
+                      ),
+                    ]),
+                  ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text('Ana Garcia',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 18)),
-                        SizedBox(height: 4),
-                        Text('Gerente Financiero\nTecnologia Avanzada S.L.',
-                            style: TextStyle(color: Colors.black54)),
-                      ]),
+
+                const SizedBox(height: 6),
+
+                // 🔹 Sección Info Personal
+                const _SectionTitle('Información personal'),
+                Card(
+                  child: Column(children: const [
+                    _InfoTile(label: 'Nombre completo', value: 'Ana Garcia'),
+                    Divider(height: 1),
+                    _InfoTile(
+                        label: 'Correo electrónico',
+                        value: 'ana.garcia@teca-sl.com'),
+                    Divider(height: 1),
+                    _InfoTile(label: 'Teléfono', value: '+34 600 000 000'),
+                  ]),
                 ),
-              ]),
+
+                // 🔹 Sección Info Empresarial
+                const _SectionTitle('Información empresarial'),
+                Card(
+                  child: Column(children: const [
+                    _InfoTile(
+                        label: 'Empresa', value: 'Tecnologia Avanzada S.L.'),
+                    Divider(height: 1),
+                    _InfoTile(label: 'Cargo', value: 'Gerente Financiero'),
+                  ]),
+                ),
+
+                // 🔹 Control de tema oscuro
+                const _SectionTitle('Preferencias'),
+                Card(
+                  child: SwitchListTile(
+                    title: const Text("Modo oscuro",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w500)),
+                    value: isDark,
+                    onChanged: widget.onThemeChanged,
+                    secondary: Icon(
+                        isDark ? Icons.dark_mode : Icons.light_mode,
+                        color: Theme.of(context).colorScheme.primary),
+                  ),
+                ),
+              ],
             ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // 🔹 Sección Info Personal
-          const _SectionTitle('Información personal'),
-          Card(
-            child: Column(children: const [
-              _InfoTile(label: 'Nombre completo', value: 'Ana Garcia'),
-              Divider(height: 1),
-              _InfoTile(
-                  label: 'Correo electrónico', value: 'ana.garcia@teca-sl.com'),
-              Divider(height: 1),
-              _InfoTile(label: 'Teléfono', value: '+34 600 000 000'),
-            ]),
-          ),
-
-          // 🔹 Sección Info Empresarial
-          const _SectionTitle('Información empresarial'),
-          Card(
-            child: Column(children: const [
-              _InfoTile(label: 'Empresa', value: 'Tecnologia Avanzada S.L.'),
-              Divider(height: 1),
-              _InfoTile(label: 'Cargo', value: 'Gerente Financiero'),
-            ]),
-          ),
-
-          // 🔹 Control de tema oscuro
-          const _SectionTitle('Preferencias'),
-          Card(
-            child: SwitchListTile(
-              title: const Text("Modo oscuro",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-              value: isDark,
-              onChanged: onThemeChanged,
-              secondary: Icon(
-                  isDark ? Icons.dark_mode : Icons.light_mode,
-                  color: Theme.of(context).colorScheme.primary),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
