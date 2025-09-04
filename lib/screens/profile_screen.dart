@@ -20,11 +20,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // ⏳ después de 3 segundos ocultamos el logo
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() => _showLogo = false);
-      }
+    // ⏳ después de 100ms ocultamos el logo
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted) setState(() => _showLogo = false);
     });
   }
 
@@ -53,12 +51,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
               children: [
-                // 🔹 Encabezado Perfil
                 Text('Perfil',
                     style: Theme.of(context).textTheme.headlineSmall),
                 const SizedBox(height: 10),
 
-                // 🔹 Tarjeta principal
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -94,7 +90,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                 const SizedBox(height: 6),
 
-                // 🔹 Sección Info Personal
                 const _SectionTitle('Información personal'),
                 Card(
                   child: Column(children: const [
@@ -108,7 +103,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ]),
                 ),
 
-                // 🔹 Sección Info Empresarial
                 const _SectionTitle('Información empresarial'),
                 Card(
                   child: Column(children: const [
@@ -119,7 +113,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ]),
                 ),
 
-                // 🔹 Control de tema oscuro
                 const _SectionTitle('Preferencias'),
                 Card(
                   child: SwitchListTile(

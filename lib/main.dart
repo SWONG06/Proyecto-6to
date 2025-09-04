@@ -1,55 +1,38 @@
+import 'package:financecloud/screens/profile_screen.dart';
 import 'package:flutter/material.dart';
+import 'profile_screen.dart'; // 👈 importa tu pantalla de perfil
 
-class ProfileScreen extends StatelessWidget {
-  final ThemeMode themeMode;
-  final ValueChanged<bool> onThemeChanged;
+void main() {
+  runApp(const FinanceCloudApp());
+}
 
-  const ProfileScreen({
-    super.key,
-    required this.themeMode,
-    required this.onThemeChanged,
-  });
+class FinanceCloudApp extends StatefulWidget {
+  const FinanceCloudApp({super.key});
+
+  @override
+  State<FinanceCloudApp> createState() => _FinanceCloudAppState();
+}
+
+class _FinanceCloudAppState extends State<FinanceCloudApp> {
+  ThemeMode _themeMode = ThemeMode.light; // 👈 inicia en modo claro
+
+  void _toggleTheme(bool isDark) {
+    setState(() {
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = themeMode == ThemeMode.dark;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Perfil"),
-        actions: [
-          IconButton(
-            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
-            tooltip: isDark ? "Cambiar a modo claro" : "Cambiar a modo oscuro",
-            onPressed: () => onThemeChanged(!isDark),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            const CircleAvatar(
-              radius: 40,
-              child: Icon(Icons.person, size: 40),
-            ),
-            const SizedBox(height: 16),
-            const Text("Usuario Demo", style: TextStyle(fontSize: 20)),
-            const SizedBox(height: 24),
-
-            // 🔥 Switch para modo oscuro
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text("Modo oscuro", style: TextStyle(fontSize: 16)),
-                Switch(
-                  value: isDark,
-                  onChanged: onThemeChanged,
-                ),
-              ],
-            ),
-          ],
-        ),
+    return MaterialApp(
+      title: 'Finance Cloud',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.light(useMaterial3: true),
+      darkTheme: ThemeData.dark(useMaterial3: true),
+      themeMode: _themeMode,
+      home: ProfileScreen(
+        themeMode: _themeMode,
+        onThemeChanged: _toggleTheme,
       ),
     );
   }
