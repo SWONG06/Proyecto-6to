@@ -217,6 +217,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelColor = isDark ? Colors.white70 : Colors.black87;
+    final textColor = isDark ? Colors.white : Colors.black;
 
     if (_snackBarMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -266,11 +269,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                 ButtonSegment(
                     value: TxType.expense,
                     icon: Icon(Icons.arrow_downward_rounded),
-                    label: Text('Gasto')),
+                    label: Text('Gasto', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
                 ButtonSegment(
                     value: TxType.income,
                     icon: Icon(Icons.arrow_upward_rounded),
-                    label: Text('Ingreso')),
+                    label: Text('Ingreso', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
               ],
               selected: {_type},
               onSelectionChanged: (s) => setState(() => _type = s.first),
@@ -281,8 +284,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               controller: _amountCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                  labelText: 'Monto*', prefixText: r'$ '),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: textColor),
+              decoration: InputDecoration(
+                labelText: 'Monto*',
+                prefixText: r'$ ',
+                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Requerido' : null,
             ),
@@ -290,9 +298,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
 
             DropdownButtonFormField<String>(
               value: _selectedCategory,
-              decoration: const InputDecoration(labelText: 'Categoría*'),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor),
+              decoration: InputDecoration(
+                labelText: 'Categoría*',
+                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              ),
               items: _categories
-                  .map((cat) => DropdownMenuItem(value: cat, child: Text(cat)))
+                  .map((cat) => DropdownMenuItem(
+                    value: cat,
+                    child: Text(cat, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textColor)),
+                  ))
                   .toList(),
               onChanged: (val) => setState(() => _selectedCategory = val),
               validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
@@ -302,10 +318,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
             TextFormField(
               controller: _dateCtrl,
               readOnly: true,
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor),
               decoration: InputDecoration(
                 labelText: 'Fecha*',
+                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                 suffixIcon: IconButton(
-                    icon: const Icon(Icons.calendar_today_rounded),
+                    icon: const Icon(Icons.calendar_today_rounded, size: 26),
                     onPressed: _pickDate),
               ),
               validator: (_) => _selectedDate == null ? 'Requerido' : null,
@@ -314,10 +333,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
 
             DropdownButtonFormField<String>(
               value: _selectedMethod,
-              decoration: const InputDecoration(labelText: 'Método de pago'),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor),
+              decoration: InputDecoration(
+                labelText: 'Método de pago',
+                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              ),
               items: _paymentMethods
                   .map((method) =>
-                      DropdownMenuItem(value: method, child: Text(method)))
+                      DropdownMenuItem(
+                        value: method,
+                        child: Text(method, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textColor)),
+                      ))
                   .toList(),
               onChanged: (val) => setState(() => _selectedMethod = val),
             ),
@@ -327,7 +354,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               controller: _descCtrl,
               minLines: 2,
               maxLines: 4,
-              decoration: const InputDecoration(labelText: 'Descripción*'),
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor),
+              decoration: InputDecoration(
+                labelText: 'Descripción*',
+                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
+                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              ),
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? 'Requerido' : null,
             ),
@@ -337,9 +369,13 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: _submit,
-                icon: const Icon(Icons.check_rounded),
-                label: const Text('Guardar Transacción'),
-                style: FilledButton.styleFrom(backgroundColor: cs.primary),
+                icon: const Icon(Icons.check_rounded, size: 22),
+                label: const Text('Guardar Transacción', 
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                style: FilledButton.styleFrom(
+                  backgroundColor: cs.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
               ),
             ),
           ]),
@@ -494,7 +530,7 @@ class AppleThemeToggle extends StatelessWidget {
                     ),
                     child: Center(
                       child: Icon(
-                        isDark ? Icons.mood_rounded : Icons.cut_rounded,
+                        isDark ? Icons.dark_mode : Icons.light_mode,
                         size: 14,
                         color: isDark ? Colors.white : cs.outline,
                       ),

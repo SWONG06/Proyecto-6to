@@ -95,8 +95,8 @@ class _TransactionsScreenState extends State<TransactionsScreen>
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: 20,
+              runSpacing: 20,
               children: const [
                 AppleSummaryChip(label: 'Gastos', value: '\$1223.00'),
                 AppleSummaryChip(label: 'Ingresos', value: '\$4500.00'),
@@ -110,7 +110,8 @@ class _TransactionsScreenState extends State<TransactionsScreen>
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Buscar transacciones...',
-                prefixIcon: const Icon(Icons.search_rounded),
+                hintStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                prefixIcon: const Icon(Icons.search_rounded, size: 24),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: BorderSide.none,
@@ -119,7 +120,10 @@ class _TransactionsScreenState extends State<TransactionsScreen>
                 fillColor: Theme.of(context)
                     .colorScheme
                     .surfaceContainerHighest,
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
               ),
+              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
               onChanged: (v) => setState(() => _query = v),
             ),
           ),
@@ -185,6 +189,7 @@ class AppleThemeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedBuilder(
       animation: animationController,
@@ -228,7 +233,7 @@ class AppleThemeToggle extends StatelessWidget {
                     ),
                     child: Center(
                       child: Icon(
-                        isDark ? Icons.mood_rounded : Icons.cut_rounded,
+                        isDarkMode ? Icons.dark_mode : Icons.light_mode,
                         size: 14,
                         color: isDark ? Colors.white : cs.outline,
                       ),
@@ -279,9 +284,11 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(8),
@@ -297,7 +304,7 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
                   value: item,
                   child: Text(
                     item,
-                    style: const TextStyle(fontSize: 13),
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor),
                   ),
                 ))
             .toList(),
@@ -312,7 +319,7 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
         isExpanded: false,
         icon: Icon(
           Icons.unfold_more_rounded,
-          size: 16,
+          size: 18,
           color: cs.onSurfaceVariant,
         ),
       ),
@@ -333,11 +340,13 @@ class AppleSummaryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isExpense = label.toLowerCase() == 'gastos';
+    final labelColor = isDark ? Colors.white : Colors.black87;
+    final valueColor = isExpense ? Colors.red[500] : Colors.green[500];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: isExpense
             ? Colors.red[500]?.withOpacity(0.12)
@@ -357,17 +366,18 @@ class AppleSummaryChip extends StatelessWidget {
             label,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 12,
-              color: cs.onSurface,
+              fontSize: 14,
+              color: labelColor,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Text(
             value,
+            // 📌 AQUÍ SE PUEDE AGRANDAR LOS NÚMEROS: Cambiar fontSize de 60 a valores mayores (18, 19, 20, etc.)
             style: TextStyle(
-              color: isExpense ? Colors.red[500] : Colors.green[500],
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
+              color: valueColor,
+              fontWeight: FontWeight.w800,
+              fontSize: 30,
             ),
           ),
         ],

@@ -55,7 +55,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       slivers: [
         SliverAppBar(
           pinned: true,
-          title: const Text('FinanceCloud'),
+          title: const Text('FinanceCloud', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
           actions: [
             // Interruptor de tema
             Padding(
@@ -88,12 +88,14 @@ class _DashboardScreenState extends State<DashboardScreen>
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: AppleIconButton(
-                  icon: Icons.person, // The argument type 'VoidCallback?' can't be assigned to the parameter type 'VoidCallback'.
+                  icon: Icons.person,
                   onPressed: widget.onNavigateToProfile!,
                 ),
               ),
           ],
-        ),        // --- resto del contenido ---
+        ), 
+
+        // --- resto del contenido ---
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -133,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     alignment: Alignment.centerLeft,
                     child: Text(
                       'Tendencia mensual',
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 20, fontWeight: FontWeight.w800),
                     ),
                   ),
                 ),
@@ -170,12 +172,12 @@ class _HeaderCard extends StatelessWidget {
           children: [
             Text(
               'Bienvenido, $userName',
-              style: Theme.of(context).textTheme.headlineSmall,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 8),
             Text(
               'Tu balance actual es:',
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 4),
             MoneyText(balance),
