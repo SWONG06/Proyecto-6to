@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import '../models/finance_models.dart';
 import '../utils/format.dart';
 import 'money_text.dart';
@@ -15,10 +16,13 @@ class TransactionCard extends StatelessWidget {
     return Card(
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor:
-              (isExpense ? cs.error : cs.primary).withOpacity(0.12), // corregido
+          backgroundColor: (isExpense ? cs.error : cs.primary).withOpacity(
+            0.12,
+          ),
           child: Icon(
-            isExpense ? Icons.south_west : Icons.north_east,
+            isExpense
+                ? CupertinoIcons.arrow_down_left
+                : CupertinoIcons.arrow_up_right,
             color: isExpense ? cs.error : cs.primary,
           ),
         ),
@@ -30,10 +34,9 @@ class TransactionCard extends StatelessWidget {
           '${tx.category} • ${dateShort(tx.date)} • ${tx.paymentMethod}',
         ),
         trailing: MoneyText(
-          // Se pasa solo el monto, sin amount:
           isExpense ? -tx.amount : tx.amount,
           color: isExpense ? cs.error : Colors.green,
-          style: const TextStyle(fontWeight: FontWeight.w700), amount: null,
+          style: const TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
     );

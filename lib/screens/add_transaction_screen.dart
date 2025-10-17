@@ -89,7 +89,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
       initialDate: _selectedDate ?? now,
       locale: const Locale('es'),
     );
-    if (!mounted) return; // ✅ Verifica antes de usar context
+    if (!mounted) return;
     if (res != null) {
       setState(() {
         _selectedDate = res;
@@ -100,7 +100,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
 
   Future<void> _scanReceipt() async {
     final status = await Permission.camera.request();
-    if (!mounted) return; // ✅ Seguridad ante desmontaje
+    if (!mounted) return;
 
     if (!status.isGranted) {
       if (status.isPermanentlyDenied) {
@@ -138,7 +138,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     final image = await picker.pickImage(source: ImageSource.camera);
     if (!mounted || image == null) return;
 
-    // Mostrar diálogo de carga
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -156,7 +155,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     try {
       final data = await _geminiService.analyzeReceipt(image);
       if (!mounted) return;
-      Navigator.of(context).pop(); // Cierra el diálogo
+      Navigator.of(context).pop();
 
       if (data != null) {
         setState(() {
@@ -232,14 +231,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
       appBar: AppBar(
         title: const Text('Agregar Transacción'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.camera_alt),
-            tooltip: 'Escanear Recibo',
-            onPressed: _scanReceipt,
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: AppleIconButton(
+              icon: Icons.camera,
+              onPressed: _scanReceipt,
+              tooltip: 'Escanear Recibo',
+            ),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: _ModernThemeToggle(
+            child: AppleThemeToggle(
               isDark: widget.themeMode == ThemeMode.dark,
               onToggle: (isDark) {
                 widget.onThemeChanged(isDark);
@@ -263,11 +265,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               segments: const [
                 ButtonSegment(
                     value: TxType.expense,
-                    icon: Icon(Icons.south_west),
+                    icon: Icon(Icons.arrow_downward_rounded),
                     label: Text('Gasto')),
                 ButtonSegment(
                     value: TxType.income,
-                    icon: Icon(Icons.north_east),
+                    icon: Icon(Icons.arrow_upward_rounded),
                     label: Text('Ingreso')),
               ],
               selected: {_type},
@@ -303,7 +305,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               decoration: InputDecoration(
                 labelText: 'Fecha*',
                 suffixIcon: IconButton(
-                    icon: const Icon(Icons.calendar_today),
+                    icon: const Icon(Icons.calendar_today_rounded),
                     onPressed: _pickDate),
               ),
               validator: (_) => _selectedDate == null ? 'Requerido' : null,
@@ -335,8 +337,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               width: double.infinity,
               child: FilledButton.icon(
                 onPressed: _submit,
-                icon: const Icon(Icons.save_outlined),
-                label: const Text('Guardar Gasto'),
+                icon: const Icon(Icons.check_rounded),
+                label: const Text('Guardar Transacción'),
                 style: FilledButton.styleFrom(backgroundColor: cs.primary),
               ),
             ),
@@ -347,14 +349,100 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   }
 }
 
-// ------------------ WIDGET TOGGLE ------------------
+/// Botón de ícono estilo Apple con efecto de interacción sutil
+class AppleIconButton extends StatefulWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Color? color;
+  final double size;
+  final String? tooltip;
 
-class _ModernThemeToggle extends StatelessWidget {
+  const AppleIconButton({
+    super.key,
+    required this.icon,
+    required this.onPressed,
+    this.color,
+    this.size = 24,
+    this.tooltip,
+  });
+
+  @override
+  State<AppleIconButton> createState() => _AppleIconButtonState();
+}
+
+class _AppleIconButtonState extends State<AppleIconButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onPressed() {
+    _controller.forward().then((_) {
+      _controller.reverse();
+    });
+    widget.onPressed();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Tooltip(
+      message: widget.tooltip ?? '',
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: GestureDetector(
+          onTapDown: (_) => _controller.forward(),
+          onTapUp: (_) {
+            _controller.reverse();
+            _onPressed();
+          },
+          onTapCancel: () => _controller.reverse(),
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: cs.surfaceContainerHighest,
+            ),
+            child: Icon(
+              widget.icon,
+              size: widget.size,
+              color: widget.color ?? cs.onSurface,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Toggle de tema estilo Apple - Simple y elegante
+class AppleThemeToggle extends StatelessWidget {
   final bool isDark;
   final ValueChanged<bool> onToggle;
   final AnimationController animationController;
 
-  const _ModernThemeToggle({
+  const AppleThemeToggle({
+    super.key,
     required this.isDark,
     required this.onToggle,
     required this.animationController,
@@ -362,114 +450,62 @@ class _ModernThemeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
 
-    return GestureDetector(
-      onTap: () => onToggle(!isDark),
-      child: AnimatedBuilder(
-        animation: animationController,
-        builder: (context, child) {
-          final progress = animationController.value;
-
-          return Container(
-            width: 60,
-            height: 32,
+    return AnimatedBuilder(
+      animation: animationController,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () => onToggle(!isDark),
+          child: Container(
+            width: 52,
+            height: 30,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [
-                  Color.lerp(const Color(0xFFFFB347),
-                      const Color(0xFF1A1A2E), progress)!,
-                  Color.lerp(const Color(0xFFFFD700),
-                      const Color(0xFF16213E), progress)!,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              borderRadius: BorderRadius.circular(15),
+              color: isDark
+                  ? cs.primary.withOpacity(0.2)
+                  : cs.surfaceContainerHighest,
+              border: Border.all(
+                color: isDark
+                    ? cs.primary.withOpacity(0.3)
+                    : Colors.transparent,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Stack(
-              alignment: Alignment.center,
               children: [
-                if (progress > 0.5)
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _StarsPainter(opacity: (progress - 0.5) * 2),
-                    ),
-                  ),
-                AnimatedAlign(
-                  duration: const Duration(milliseconds: 300),
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
-                  alignment:
-                      isDark ? Alignment.centerRight : Alignment.centerLeft,
+                  top: 3,
+                  left: isDark ? 26 : 3,
                   child: Container(
-                    width: 26,
-                    height: 26,
-                    margin: const EdgeInsets.all(3),
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
-                      color: Colors.white,
                       shape: BoxShape.circle,
+                      color: isDark ? cs.primary : Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withOpacity(0.15),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (child, animation) =>
-                          ScaleTransition(scale: animation, child: child),
-                      child: isDark
-                          ? const Icon(Icons.nightlight_round,
-                              key: ValueKey('dark'),
-                              color: Color(0xFF1A1A2E),
-                              size: 16)
-                          : const Icon(Icons.wb_sunny_rounded,
-                              key: ValueKey('light'),
-                              color: Color(0xFFFFB347),
-                              size: 16),
+                    child: Center(
+                      child: Icon(
+                        isDark ? Icons.mood_rounded : Icons.cut_rounded,
+                        size: 14,
+                        color: isDark ? Colors.white : cs.outline,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
-}
-
-class _StarsPainter extends CustomPainter {
-  final double opacity;
-  const _StarsPainter({required this.opacity});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(opacity * 0.8)
-      ..style = PaintingStyle.fill;
-
-    final stars = [
-      Offset(size.width * 0.2, size.height * 0.3),
-      Offset(size.width * 0.7, size.height * 0.2),
-      Offset(size.width * 0.4, size.height * 0.7),
-      Offset(size.width * 0.8, size.height * 0.6),
-    ];
-
-    for (final star in stars) {
-      canvas.drawCircle(star, 1, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

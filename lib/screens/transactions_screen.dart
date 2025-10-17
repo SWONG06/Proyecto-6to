@@ -61,10 +61,10 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       return matchesQuery && matchesType && matchesCat;
     }).toList();
 
-    // Lista de categorías (ahora tipo List<String>)
+    // Lista de categorías
     final List<String> categories = [
       'Todas',
-      ...widget.state.transactions.map((e) => e.category),
+      ...widget.state.transactions.map((e) => e.category).toSet(),
     ];
 
     return Scaffold(
@@ -73,7 +73,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
-            child: _ModernThemeToggle(
+            child: AppleThemeToggle(
               isDark: widget.themeMode == ThemeMode.dark,
               onToggle: (isDark) {
                 widget.onThemeChanged(isDark);
@@ -91,15 +91,15 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Resumen fijo (puedes reemplazar valores luego)
+          // Resumen
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Wrap(
               spacing: 12,
               runSpacing: 12,
               children: const [
-                _SummaryChip(label: 'Gastos', value: '\$1223.00'),
-                _SummaryChip(label: 'Ingresos', value: '\$4500.00'),
+                AppleSummaryChip(label: 'Gastos', value: '\$1223.00'),
+                AppleSummaryChip(label: 'Ingresos', value: '\$4500.00'),
               ],
             ),
           ),
@@ -108,9 +108,17 @@ class _TransactionsScreenState extends State<TransactionsScreen>
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 hintText: 'Buscar transacciones...',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search_rounded),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Theme.of(context)
+                    .colorScheme
+                    .surfaceContainerHighest,
               ),
               onChanged: (v) => setState(() => _query = v),
             ),
@@ -119,35 +127,41 @@ class _TransactionsScreenState extends State<TransactionsScreen>
           // Filtros
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(children: [
-              DropdownButton<String>(
-                value: _typeFilter,
-                items: const [
-                  DropdownMenuItem(value: 'Todos', child: Text('Todos')),
-                  DropdownMenuItem(value: 'Gastos', child: Text('Gastos')),
-                  DropdownMenuItem(value: 'Ingresos', child: Text('Ingresos')),
-                ],
-                onChanged: (v) => setState(() => _typeFilter = v!),
-              ),
-              const SizedBox(width: 16),
-              DropdownButton<String>(
-                value: _categoryFilter,
-                items: categories
-                    .map((c) =>
-                        DropdownMenuItem(value: c, child: Text(c)))
-                    .toList(),
-                onChanged: (v) => setState(() => _categoryFilter = v!),
-              ),
-            ]),
+            child: Row(
+              children: [
+                AppleDropdownButton(
+                  value: _typeFilter,
+                  items: const ['Todos', 'Gastos', 'Ingresos'],
+                  onChanged: (v) => setState(() => _typeFilter = v),
+                ),
+                const SizedBox(width: 12),
+                AppleDropdownButton(
+                  value: _categoryFilter,
+                  items: categories,
+                  onChanged: (v) => setState(() => _categoryFilter = v),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
 
           // Lista de transacciones
           Expanded(
-            child: ListView.builder(
-              itemCount: txs.length,
-              itemBuilder: (_, i) => TransactionCard(tx: txs[i]),
-            ),
+            child: txs.isEmpty
+                ? Center(
+                    child: Text(
+                      'No hay transacciones',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: txs.length,
+                    itemBuilder: (_, i) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: TransactionCard(tx: txs[i]),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -155,12 +169,14 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   }
 }
 
-class _ModernThemeToggle extends StatelessWidget {
+/// Toggle de tema estilo Apple - Simple y elegante
+class AppleThemeToggle extends StatelessWidget {
   final bool isDark;
   final ValueChanged<bool> onToggle;
   final AnimationController animationController;
 
-  const _ModernThemeToggle({
+  const AppleThemeToggle({
+    super.key,
     required this.isDark,
     required this.onToggle,
     required this.animationController,
@@ -168,154 +184,194 @@ class _ModernThemeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
 
-    return GestureDetector(
-      onTap: () => onToggle(!isDark),
-      child: AnimatedBuilder(
-        animation: animationController,
-        builder: (context, child) {
-          final progress = animationController.value;
-
-          return Container(
-            width: 60,
-            height: 32,
+    return AnimatedBuilder(
+      animation: animationController,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () => onToggle(!isDark),
+          child: Container(
+            width: 52,
+            height: 30,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [
-                  Color.lerp(
-                    const Color(0xFFFFB347),
-                    const Color(0xFF1A1A2E),
-                    progress,
-                  )!,
-                  Color.lerp(
-                    const Color(0xFFFFD700),
-                    const Color(0xFF16213E),
-                    progress,
-                  )!,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              borderRadius: BorderRadius.circular(15),
+              color: isDark
+                  ? cs.primary.withOpacity(0.2)
+                  : cs.surfaceContainerHighest,
+              border: Border.all(
+                color: isDark
+                    ? cs.primary.withOpacity(0.3)
+                    : Colors.transparent,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Stack(
-              alignment: Alignment.center,
               children: [
-                if (progress > 0.5)
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter:
-                          _StarsPainter(opacity: (progress - 0.5) * 2),
-                    ),
-                  ),
-                AnimatedAlign(
-                  duration: const Duration(milliseconds: 300),
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
-                  alignment: isDark
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
+                  top: 3,
+                  left: isDark ? 26 : 3,
                   child: Container(
-                    width: 26,
-                    height: 26,
-                    margin: const EdgeInsets.all(3),
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
-                      color: Colors.white,
                       shape: BoxShape.circle,
+                      color: isDark ? cs.primary : Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withOpacity(0.15),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (child, animation) {
-                        return ScaleTransition(
-                            scale: animation, child: child);
-                      },
-                      child: isDark
-                          ? Icon(
-                              Icons.nightlight_round,
-                              key: const ValueKey('dark'),
-                              color: const Color(0xFF1A1A2E),
-                              size: 16,
-                            )
-                          : Icon(
-                              Icons.wb_sunny_rounded,
-                              key: const ValueKey('light'),
-                              color: const Color(0xFFFFB347),
-                              size: 16,
-                            ),
+                    child: Center(
+                      child: Icon(
+                        isDark ? Icons.mood_rounded : Icons.cut_rounded,
+                        size: 14,
+                        color: isDark ? Colors.white : cs.outline,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-          );
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Dropdown estilo Apple - Minimalista
+class AppleDropdownButton extends StatefulWidget {
+  final String value;
+  final List<String> items;
+  final ValueChanged<String> onChanged;
+
+  const AppleDropdownButton({
+    super.key,
+    required this.value,
+    required this.items,
+    required this.onChanged,
+  });
+
+  @override
+  State<AppleDropdownButton> createState() => _AppleDropdownButtonState();
+}
+
+class _AppleDropdownButtonState extends State<AppleDropdownButton> {
+  late String _currentValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentValue = widget.value;
+  }
+
+  @override
+  void didUpdateWidget(AppleDropdownButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _currentValue = widget.value;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: cs.outlineVariant.withOpacity(0.5),
+          width: 0.5,
+        ),
+      ),
+      child: DropdownButton<String>(
+        value: _currentValue,
+        items: widget.items
+            .map((item) => DropdownMenuItem(
+                  value: item,
+                  child: Text(
+                    item,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ))
+            .toList(),
+        onChanged: (v) {
+          if (v != null) {
+            setState(() => _currentValue = v);
+            widget.onChanged(v);
+          }
         },
+        underline: const SizedBox(),
+        isDense: true,
+        isExpanded: false,
+        icon: Icon(
+          Icons.unfold_more_rounded,
+          size: 16,
+          color: cs.onSurfaceVariant,
+        ),
       ),
     );
   }
 }
 
-class _StarsPainter extends CustomPainter {
-  final double opacity;
-
-  const _StarsPainter({required this.opacity});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(opacity * 0.8)
-      ..style = PaintingStyle.fill;
-
-    final stars = [
-      Offset(size.width * 0.2, size.height * 0.3),
-      Offset(size.width * 0.7, size.height * 0.2),
-      Offset(size.width * 0.4, size.height * 0.7),
-      Offset(size.width * 0.8, size.height * 0.6),
-    ];
-
-    for (final star in stars) {
-      canvas.drawCircle(star, 1, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-class _SummaryChip extends StatelessWidget {
+/// Chip de resumen estilo Apple
+class AppleSummaryChip extends StatelessWidget {
   final String label;
   final String value;
-  const _SummaryChip({required this.label, required this.value});
+
+  const AppleSummaryChip({
+    super.key,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isExpense = label.toLowerCase() == 'gastos';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: cs.primary.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(12),
+        color: isExpense
+            ? Colors.red[500]?.withOpacity(0.12)
+            : Colors.green[500]?.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isExpense
+              ? Colors.red[300]?.withOpacity(0.3) ?? Colors.transparent
+              : Colors.green[300]?.withOpacity(0.3) ?? Colors.transparent,
+          width: 0.5,
+        ),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(width: 8),
-        Text(value,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
             style: TextStyle(
-                color: cs.primary, fontWeight: FontWeight.w700)),
-      ]),
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: cs.onSurface,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            style: TextStyle(
+              color: isExpense ? Colors.red[500] : Colors.green[500],
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -1,14 +1,13 @@
-import 'package:flutter/material.dart'; // Importa los widgets y utilidades principales de Flutter.
-import '../models/finance_models.dart'; // Importa los modelos financieros utilizados en la aplicación.
-import '../utils/format.dart'; // Importa funciones de utilidad para formatear datos.
-import '../widgets/dual_line_chart.dart'; // Importa un widget personalizado para gráficos de líneas.
-import '../widgets/category_distribution_chart.dart'; // Importa un widget personalizado para gráficos de distribución por categorías.
+import 'package:flutter/material.dart';
+import '../models/finance_models.dart';
+import '../utils/format.dart';
+import '../widgets/dual_line_chart.dart';
+import '../widgets/category_distribution_chart.dart';
 
-// Pantalla principal de reportes financieros.
 class ReportsScreen extends StatefulWidget {
-  final FinanceAppState state; // Estado de la aplicación que contiene los datos financieros.
-  final ThemeMode themeMode; // Modo de tema actual (claro u oscuro).
-  final void Function(bool isDark) onThemeChanged; // Callback para cambiar el tema.
+  final FinanceAppState state;
+  final ThemeMode themeMode;
+  final void Function(bool isDark) onThemeChanged;
 
   const ReportsScreen({
     super.key,
@@ -21,7 +20,8 @@ class ReportsScreen extends StatefulWidget {
   State<ReportsScreen> createState() => _ReportsScreenState();
 }
 
-class _ReportsScreenState extends State<ReportsScreen> with TickerProviderStateMixin {
+class _ReportsScreenState extends State<ReportsScreen>
+    with TickerProviderStateMixin {
   late AnimationController _themeAnimationController;
 
   @override
@@ -31,7 +31,7 @@ class _ReportsScreenState extends State<ReportsScreen> with TickerProviderStateM
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     if (widget.themeMode == ThemeMode.dark) {
       _themeAnimationController.value = 1.0;
     }
@@ -46,15 +46,13 @@ class _ReportsScreenState extends State<ReportsScreen> with TickerProviderStateM
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
-      // Vista de desplazamiento personalizada con soporte para Slivers.
       slivers: [
-        // Barra de aplicación con título y botón para cambiar el tema.
         SliverAppBar(
-          title: const Text('Reportes'), // Título de la pantalla.
+          title: const Text('Reportes'),
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
-              child: _ModernThemeToggle(
+              child: AppleThemeToggle(
                 isDark: widget.themeMode == ThemeMode.dark,
                 onToggle: (isDark) {
                   widget.onThemeChanged(isDark);
@@ -69,75 +67,70 @@ class _ReportsScreenState extends State<ReportsScreen> with TickerProviderStateM
             ),
           ],
         ),
-        // Contenedor principal con estadísticas y gráficos.
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              16,
-              12,
-              16,
-              0,
-            ), // Margen interno del contenedor.
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // Alinea los elementos al inicio.
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Título de la sección.
                 Text(
                   'Financieros - Análisis y tendencias',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                const SizedBox(height: 12), // Espaciado vertical.
-                // Tarjetas de estadísticas rápidas.
+                const SizedBox(height: 12),
                 Wrap(
-                  spacing: 12, // Espaciado horizontal entre tarjetas.
-                  runSpacing: 12, // Espaciado vertical entre tarjetas.
+                  spacing: 12,
+                  runSpacing: 12,
                   children: [
-                    _StatCard(
+                    AppleStatCard(
                       title: 'Variación gastos (este mes)',
                       value: '+${pct(widget.state.reportThisMonthExpenseVarPct)}',
-                    ), // Tarjeta con variación de gastos.
-                    _StatCard(
+                      icon: Icons.trending_down_rounded,
+                      iconColor: Colors.red[400],
+                    ),
+                    AppleStatCard(
                       title: 'Margen beneficio',
                       value: pct(widget.state.reportThisMonthMarginPct),
-                    ), // Tarjeta con margen de beneficio.
+                      icon: Icons.trending_up_rounded,
+                      iconColor: Colors.green[400],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 8), // Espaciado adicional.
+                const SizedBox(height: 8),
               ],
             ),
           ),
         ),
-        // Gráfico de líneas para mostrar tendencias de beneficios y gastos.
         SliverToBoxAdapter(
           child: DualLineChart(
-            labels: widget.state.months, // Etiquetas de los meses.
-            seriesA: widget.state.trendProfit, // Datos de la serie de beneficios.
-            seriesB: widget.state.trendExpense, // Datos de la serie de gastos.
-            labelA: 'Beneficio', // Etiqueta para la serie A.
-            labelB: 'Gastos', // Etiqueta para la serie B.
+            labels: widget.state.months,
+            seriesA: widget.state.trendProfit,
+            seriesB: widget.state.trendExpense,
+            labelA: 'Beneficio',
+            labelB: 'Gastos',
           ),
         ),
-        // Gráfico de distribución por categorías.
         SliverToBoxAdapter(
           child: CategoryDistributionChart(
             data: widget.state.categoryDistribution,
-          ), // Muestra la distribución de gastos por categoría.
+          ),
         ),
         const SliverToBoxAdapter(
           child: SizedBox(height: 12),
-        ), // Espaciado final.
+        ),
       ],
     );
   }
 }
 
-class _ModernThemeToggle extends StatelessWidget {
+/// Toggle de tema estilo Apple - Simple y elegante
+class AppleThemeToggle extends StatelessWidget {
   final bool isDark;
   final ValueChanged<bool> onToggle;
   final AnimationController animationController;
 
-  const _ModernThemeToggle({
+  const AppleThemeToggle({
+    super.key,
     required this.isDark,
     required this.onToggle,
     required this.animationController,
@@ -145,180 +138,177 @@ class _ModernThemeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    return GestureDetector(
-      onTap: () => onToggle(!isDark),
-      child: AnimatedBuilder(
-        animation: animationController,
-        builder: (context, child) {
-          final progress = animationController.value;
-          
-          return Container(
-            width: 60,
-            height: 32,
+    final cs = Theme.of(context).colorScheme;
+
+    return AnimatedBuilder(
+      animation: animationController,
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () => onToggle(!isDark),
+          child: Container(
+            width: 52,
+            height: 30,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [
-                  Color.lerp(
-                    const Color(0xFFFFB347), // Naranja suave para modo claro
-                    const Color(0xFF1A1A2E), // Azul oscuro para modo oscuro
-                    progress,
-                  )!,
-                  Color.lerp(
-                    const Color(0xFFFFD700), // Dorado para modo claro
-                    const Color(0xFF16213E), // Azul más oscuro para modo oscuro
-                    progress,
-                  )!,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+              borderRadius: BorderRadius.circular(15),
+              color: isDark
+                  ? cs.primary.withOpacity(0.2)
+                  : cs.surfaceContainerHighest,
+              border: Border.all(
+                color: isDark
+                    ? cs.primary.withOpacity(0.3)
+                    : Colors.transparent,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.shadow.withOpacity(0.15),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
             ),
             child: Stack(
-              alignment: Alignment.center,
               children: [
-                // Fondo con estrellas para modo oscuro
-                if (progress > 0.5)
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: _StarsPainter(opacity: (progress - 0.5) * 2),
-                    ),
-                  ),
-                
-                // Indicador deslizante
-                AnimatedAlign(
-                  duration: const Duration(milliseconds: 300),
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 200),
                   curve: Curves.easeInOut,
-                  alignment: isDark ? Alignment.centerRight : Alignment.centerLeft,
+                  top: 3,
+                  left: isDark ? 26 : 3,
                   child: Container(
-                    width: 26,
-                    height: 26,
-                    margin: const EdgeInsets.all(3),
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
-                      color: Colors.white,
                       shape: BoxShape.circle,
+                      color: isDark ? cs.primary : Colors.white,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withOpacity(0.15),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
                       ],
                     ),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (child, animation) {
-                        return ScaleTransition(scale: animation, child: child);
-                      },
-                      child: isDark
-                          ? Icon(
-                              Icons.nightlight_round,
-                              key: const ValueKey('dark'),
-                              color: const Color(0xFF1A1A2E),
-                              size: 16,
-                            )
-                          : Icon(
-                              Icons.wb_sunny_rounded,
-                              key: const ValueKey('light'),
-                              color: const Color(0xFFFFB347),
-                              size: 16,
-                            ),
+                    child: Center(
+                      child: Icon(
+                        isDark ? Icons.mood_rounded : Icons.cut_rounded,
+                        size: 14,
+                        color: isDark ? Colors.white : cs.outline,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
 
-class _StarsPainter extends CustomPainter {
-  final double opacity;
-  
-  const _StarsPainter({required this.opacity});
+/// Tarjeta de estadísticas estilo Apple - Minimalista y elegante
+class AppleStatCard extends StatefulWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color? iconColor;
+
+  const AppleStatCard({
+    super.key,
+    required this.title,
+    required this.value,
+    required this.icon,
+    this.iconColor,
+  });
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(opacity * 0.8)
-      ..style = PaintingStyle.fill;
+  State<AppleStatCard> createState() => _AppleStatCardState();
+}
 
-    // Dibujar pequeñas estrellas
-    final stars = [
-      Offset(size.width * 0.2, size.height * 0.3),
-      Offset(size.width * 0.7, size.height * 0.2),
-      Offset(size.width * 0.4, size.height * 0.7),
-      Offset(size.width * 0.8, size.height * 0.6),
-    ];
+class _AppleStatCardState extends State<AppleStatCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _hoverController;
+  late Animation<double> _hoverAnimation;
 
-    for (final star in stars) {
-      canvas.drawCircle(star, 1, paint);
-    }
+  @override
+  void initState() {
+    super.initState();
+    _hoverController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _hoverAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
+      CurvedAnimation(parent: _hoverController, curve: Curves.easeInOut),
+    );
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
-// Widget para mostrar una tarjeta de estadísticas rápidas.
-class _StatCard extends StatelessWidget {
-  final String title; // Título de la tarjeta.
-  final String value; // Valor mostrado en la tarjeta.
-
-  const _StatCard({required this.title, required this.value});
+  void dispose() {
+    _hoverController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(
-      context,
-    ).colorScheme; // Obtiene el esquema de colores del tema actual.
-    return Container(
-      decoration: BoxDecoration(
-        color: cs.surface, // Color de fondo de la tarjeta.
-        borderRadius: BorderRadius.circular(16), // Bordes redondeados.
-        boxShadow: [
-          BoxShadow(
-            color: cs.shadow.withOpacity(0.05), // Sombra ligera.
-            blurRadius: 6, // Difuminado de la sombra.
-            offset: const Offset(0, 2), // Desplazamiento de la sombra.
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(14), // Margen interno de la tarjeta.
-      child: Row(
-        mainAxisSize:
-            MainAxisSize.min, // Ajusta el tamaño de la fila al contenido.
-        children: [
-          Icon(Icons.insights, color: cs.primary), // Icono de la tarjeta.
-          const SizedBox(width: 10), // Espaciado entre el icono y el texto.
-          Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start, // Alinea el texto al inicio.
-            children: [
-              Text(
-                value,
-                style: const TextStyle(fontWeight: FontWeight.w800),
-              ), // Valor de la tarjeta.
-              const SizedBox(height: 4), // Espaciado vertical.
-              Text(
-                title,
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
-              ), // Título de la tarjeta.
+    final cs = Theme.of(context).colorScheme;
+
+    return ScaleTransition(
+      scale: _hoverAnimation,
+      child: MouseRegion(
+        onEnter: (_) => _hoverController.forward(),
+        onExit: (_) => _hoverController.reverse(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: cs.outlineVariant.withOpacity(0.5),
+              width: 0.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: cs.shadow.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
-        ],
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: widget.iconColor?.withOpacity(0.15) ??
+                      cs.primary.withOpacity(0.15),
+                ),
+                child: Icon(
+                  widget.icon,
+                  color: widget.iconColor ?? cs.primary,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.value,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    widget.title,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: cs.onSurfaceVariant,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
