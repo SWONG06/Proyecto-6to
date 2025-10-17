@@ -23,6 +23,7 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen>
     with TickerProviderStateMixin {
   late AnimationController _themeAnimationController;
+  late TextEditingController _searchController;
 
   @override
   void initState() {
@@ -32,6 +33,8 @@ class _ReportsScreenState extends State<ReportsScreen>
       vsync: this,
     );
 
+    _searchController = TextEditingController();
+
     if (widget.themeMode == ThemeMode.dark) {
       _themeAnimationController.value = 1.0;
     }
@@ -40,15 +43,24 @@ class _ReportsScreenState extends State<ReportsScreen>
   @override
   void dispose() {
     _themeAnimationController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+
     return CustomScrollView(
       slivers: [
         SliverAppBar(
-          title: const Text('Reportes'),
+          title: AppleSearchBar(
+            controller: _searchController,
+            onSearchChanged: (value) {
+              setState(() {
+                var _ = value;
+              });
+            },
+          ),
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -69,7 +81,7 @@ class _ReportsScreenState extends State<ReportsScreen>
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -96,29 +108,157 @@ class _ReportsScreenState extends State<ReportsScreen>
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
               ],
             ),
           ),
         ),
         SliverToBoxAdapter(
-          child: DualLineChart(
-            labels: widget.state.months,
-            seriesA: widget.state.trendProfit,
-            seriesB: widget.state.trendExpense,
-            labelA: 'Beneficio',
-            labelB: 'Gastos',
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: DualLineChart(
+              labels: widget.state.months,
+              seriesA: widget.state.trendProfit,
+              seriesB: widget.state.trendExpense,
+              labelA: 'Beneficio',
+              labelB: 'Gastos',
+            ),
           ),
         ),
         SliverToBoxAdapter(
-          child: CategoryDistributionChart(
-            data: widget.state.categoryDistribution,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: CategoryDistributionChart(
+              data: widget.state.categoryDistribution,
+            ),
           ),
         ),
         const SliverToBoxAdapter(
           child: SizedBox(height: 12),
         ),
       ],
+    );
+  }
+}
+
+/// Barra de búsqueda estilo Apple
+class AppleSearchBar extends StatefulWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onSearchChanged;
+
+  const AppleSearchBar({
+    super.key,
+    required this.controller,
+    required this.onSearchChanged,
+  });
+
+  @override
+  State<AppleSearchBar> createState() => _AppleSearchBarState();
+}
+
+class _AppleSearchBarState extends State<AppleSearchBar>
+    with SingleTickerProviderStateMixin {
+  late FocusNode _focusNode;
+  late AnimationController _focusController;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        _focusController.forward();
+      } else {
+        _focusController.reverse();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _focusController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AnimatedBuilder(
+      animation: _focusController,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? cs.surfaceContainerHigh.withOpacity(
+                    0.6 + (_focusController.value * 0.2))
+                : cs.surfaceContainerHighest.withOpacity(
+                    0.8 + (_focusController.value * 0.2)),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isDark
+                  ? cs.primary.withOpacity(_focusController.value * 0.3)
+                  : cs.outlineVariant.withOpacity(_focusController.value * 0.5),
+              width: 0.5,
+            ),
+            boxShadow: [
+              if (_focusController.value > 0)
+                BoxShadow(
+                  color: cs.primary.withOpacity(_focusController.value * 0.1),
+                  blurRadius: 8 * _focusController.value,
+                  offset: const Offset(0, 2),
+                ),
+            ],
+          ),
+          child: TextField(
+            controller: widget.controller,
+            focusNode: _focusNode,
+            onChanged: widget.onSearchChanged,
+            decoration: InputDecoration(
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: cs.onSurfaceVariant.withOpacity(0.6),
+                size: 20,
+              ),
+              suffixIcon: widget.controller.text.isNotEmpty
+                  ? GestureDetector(
+                      onTap: () {
+                        widget.controller.clear();
+                        widget.onSearchChanged('');
+                        setState(() {});
+                      },
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: cs.onSurfaceVariant.withOpacity(0.6),
+                        size: 18,
+                      ),
+                    )
+                  : null,
+              hintText: 'Buscar categoría...',
+              hintStyle: TextStyle(
+                color: cs.onSurfaceVariant.withOpacity(0.5),
+                fontSize: 14,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
+            style: TextStyle(
+              fontSize: 14,
+              color: cs.onSurface,
+            ),
+            cursorColor: cs.primary,
+          ),
+        );
+      },
     );
   }
 }

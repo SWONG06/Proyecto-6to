@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-// ignore: unnecessary_import
-import 'dart:ui';
 import 'utils/theme.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/add_transaction_screen.dart';
@@ -141,11 +139,20 @@ class _MainScreenState extends State<MainScreen> {
       {'icon': Icons.qr_code_2_rounded, 'label': 'QR', 'index': 99},
     ];
 
+    // Obtener el título según el índice actual
+    String getCurrentTitle() {
+      final item = menuItems.firstWhere(
+        (item) => item['index'] == _currentIndex,
+        orElse: () => {'label': 'FinanceCloud'},
+      );
+      return item['label'];
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'FinanceCloud',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+        title: Text(
+          getCurrentTitle(),
+          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
         ),
         centerTitle: true,
         elevation: 0,

@@ -55,9 +55,11 @@ class _DashboardScreenState extends State<DashboardScreen>
       slivers: [
         SliverAppBar(
           pinned: true,
-          title: const Text('FinanceCloud', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+          title: SizedBox(
+            height: 40,
+            child: SearchBarAppleHeader(isDark: isDark),
+          ),
           actions: [
-            // Interruptor de tema
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: ModernThemeToggle(
@@ -73,29 +75,23 @@ class _DashboardScreenState extends State<DashboardScreen>
                 animationController: _themeAnimationController,
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: AppleIconButton(
-                icon: Icons.sell,
+                icon: Icons.notifications_outlined,
                 onPressed: () {},
               ),
             ),
-
-           
-            // Botón de perfil (opcional)
             if (widget.onNavigateToProfile != null)
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
                 child: AppleIconButton(
                   icon: Icons.person,
-                  onPressed: widget.onNavigateToProfile!,
+                  onPressed: widget.onNavigateToProfile ?? () {},
                 ),
               ),
           ],
-        ), 
-
-        // --- resto del contenido ---
+        ),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -188,7 +184,6 @@ class _HeaderCard extends StatelessWidget {
   }
 }
 
-/// Iconos personalizados estilo Apple
 class AppleIcon {
   static const IconData arrowUpRight = Icons.arrow_outward;
   static const IconData arrowDownLeft = Icons.arrow_outward;
@@ -196,7 +191,6 @@ class AppleIcon {
   static const IconData chartDown = Icons.trending_down_rounded;
 }
 
-/// Botón de ícono estilo Apple con efecto de interacción sutil
 class AppleIconButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onPressed;
@@ -277,7 +271,97 @@ class _AppleIconButtonState extends State<AppleIconButton>
   }
 }
 
-/// Toggle de tema mejorado con estilo Apple
+class SearchBarAppleHeader extends StatefulWidget {
+  final bool isDark;
+
+  const SearchBarAppleHeader({
+    super.key,
+    required this.isDark,
+  });
+
+  @override
+  State<SearchBarAppleHeader> createState() => _SearchBarAppleHeaderState();
+}
+
+class _SearchBarAppleHeaderState extends State<SearchBarAppleHeader> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(_handleFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleFocusChange() {
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: _isFocused
+            ? cs.surfaceContainerHigh
+            : cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: _isFocused
+              ? cs.primary.withOpacity(0.3)
+              : Colors.transparent,
+          width: 1.5,
+        ),
+      ),
+      child: TextField(
+        focusNode: _focusNode,
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: 'Buscar transacciones...',
+          hintStyle: TextStyle(
+            fontSize: 15,
+            color: cs.onSurface.withOpacity(0.5),
+            fontWeight: FontWeight.w500,
+          ),
+          prefixIcon: Icon(
+            Icons.search_rounded,
+            size: 20,
+            color: _isFocused ? cs.primary : cs.onSurface.withOpacity(0.5),
+          ),
+          suffixIcon: _isFocused
+              ? IconButton(
+                  icon: Icon(
+                    Icons.close_rounded,
+                    size: 20,
+                    color: cs.onSurface.withOpacity(0.5),
+                  ),
+                  onPressed: () {
+                    _focusNode.unfocus();
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(
+            vertical: 10,
+            horizontal: 8,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class ModernThemeToggle extends StatelessWidget {
   final bool isDark;
   final ValueChanged<bool> onToggle;
@@ -292,6 +376,9 @@ class ModernThemeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return AnimatedBuilder(
       animation: animationController,
       builder: (context, child) {
@@ -303,13 +390,11 @@ class ModernThemeToggle extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15),
               color: isDark
-                  ? Theme.of(context).colorScheme.primary.withOpacity(0.2)
-                  : Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerHighest,
+                  ? cs.primary.withOpacity(0.2)
+                  : cs.surfaceContainerHighest,
               border: Border.all(
                 color: isDark
-                    ? Theme.of(context).colorScheme.primary.withOpacity(0.3)
+                    ? cs.primary.withOpacity(0.3)
                     : Colors.transparent,
               ),
             ),
@@ -325,9 +410,7 @@ class ModernThemeToggle extends StatelessWidget {
                     height: 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: isDark
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.white,
+                      color: isDark ? cs.primary : Colors.white,
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.15),
@@ -338,11 +421,9 @@ class ModernThemeToggle extends StatelessWidget {
                     ),
                     child: Center(
                       child: Icon(
-                        isDark ? Icons.mood : Icons.cut_sharp,
+                        isDarkMode ? Icons.dark_mode : Icons.light_mode,
                         size: 14,
-                        color: isDark
-                            ? Colors.white
-                            : Theme.of(context).colorScheme.outline,
+                        color: isDarkMode ? Colors.white : cs.outline,
                       ),
                     ),
                   ),

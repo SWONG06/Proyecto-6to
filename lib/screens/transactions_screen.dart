@@ -24,6 +24,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   String _typeFilter = 'Todos';
   String _categoryFilter = 'Todas';
   late AnimationController _themeAnimationController;
+  late TextEditingController _searchController;
 
   @override
   void initState() {
@@ -33,6 +34,8 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       vsync: this,
     );
 
+    _searchController = TextEditingController();
+
     if (widget.themeMode == ThemeMode.dark) {
       _themeAnimationController.value = 1.0;
     }
@@ -41,6 +44,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   @override
   void dispose() {
     _themeAnimationController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -69,7 +73,12 @@ class _TransactionsScreenState extends State<TransactionsScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transacciones'),
+        title: AppleSearchBar(
+          controller: _searchController,
+          onSearchChanged: (value) {
+            setState(() => _query = value);
+          },
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
@@ -104,33 +113,9 @@ class _TransactionsScreenState extends State<TransactionsScreen>
             ),
           ),
 
-          // Buscador
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Buscar transacciones...',
-                hintStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                prefixIcon: const Icon(Icons.search_rounded, size: 24),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Theme.of(context)
-                    .colorScheme
-                    .surfaceContainerHighest,
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-              ),
-              style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-              onChanged: (v) => setState(() => _query = v),
-            ),
-          ),
-
           // Filtros
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             child: Row(
               children: [
                 AppleDropdownButton(
@@ -169,6 +154,129 @@ class _TransactionsScreenState extends State<TransactionsScreen>
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Barra de búsqueda estilo Apple
+class AppleSearchBar extends StatefulWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onSearchChanged;
+
+  const AppleSearchBar({
+    super.key,
+    required this.controller,
+    required this.onSearchChanged,
+  });
+
+  @override
+  State<AppleSearchBar> createState() => _AppleSearchBarState();
+}
+
+class _AppleSearchBarState extends State<AppleSearchBar>
+    with SingleTickerProviderStateMixin {
+  late FocusNode _focusNode;
+  late AnimationController _focusController;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _focusNode.addListener(() {
+      if (_focusNode.hasFocus) {
+        _focusController.forward();
+      } else {
+        _focusController.reverse();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _focusController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return AnimatedBuilder(
+      animation: _focusController,
+      builder: (context, child) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDark
+                ? cs.surfaceContainerHigh.withOpacity(
+                    0.6 + (_focusController.value * 0.2))
+                : cs.surfaceContainerHighest.withOpacity(
+                    0.8 + (_focusController.value * 0.2)),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isDark
+                  ? cs.primary.withOpacity(_focusController.value * 0.3)
+                  : cs.outlineVariant.withOpacity(_focusController.value * 0.5),
+              width: 0.5,
+            ),
+            boxShadow: [
+              if (_focusController.value > 0)
+                BoxShadow(
+                  color: cs.primary.withOpacity(_focusController.value * 0.1),
+                  blurRadius: 8 * _focusController.value,
+                  offset: const Offset(0, 2),
+                ),
+            ],
+          ),
+          child: TextField(
+            controller: widget.controller,
+            focusNode: _focusNode,
+            onChanged: widget.onSearchChanged,
+            decoration: InputDecoration(
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: cs.onSurfaceVariant.withOpacity(0.6),
+                size: 20,
+              ),
+              suffixIcon: widget.controller.text.isNotEmpty
+                  ? GestureDetector(
+                      onTap: () {
+                        widget.controller.clear();
+                        widget.onSearchChanged('');
+                        setState(() {});
+                      },
+                      child: Icon(
+                        Icons.close_rounded,
+                        color: cs.onSurfaceVariant.withOpacity(0.6),
+                        size: 18,
+                      ),
+                    )
+                  : null,
+              hintText: 'Buscar transacciones...',
+              hintStyle: TextStyle(
+                color: cs.onSurfaceVariant.withOpacity(0.5),
+                fontSize: 14,
+              ),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
+            style: TextStyle(
+              fontSize: 14,
+              color: cs.onSurface,
+            ),
+            cursorColor: cs.primary,
+          ),
+        );
+      },
     );
   }
 }
@@ -373,7 +481,6 @@ class AppleSummaryChip extends StatelessWidget {
           const SizedBox(width: 10),
           Text(
             value,
-            // 📌 AQUÍ SE PUEDE AGRANDAR LOS NÚMEROS: Cambiar fontSize de 60 a valores mayores (18, 19, 20, etc.)
             style: TextStyle(
               color: valueColor,
               fontWeight: FontWeight.w800,

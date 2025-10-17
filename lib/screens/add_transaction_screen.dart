@@ -232,7 +232,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agregar Transacción'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
