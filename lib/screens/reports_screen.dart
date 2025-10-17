@@ -23,7 +23,8 @@ class ReportsScreen extends StatefulWidget {
 class _ReportsScreenState extends State<ReportsScreen>
     with TickerProviderStateMixin {
   late AnimationController _themeAnimationController;
-  late TextEditingController _searchController;
+  String _selectedPeriod = 'Este mes';
+  String _selectedCategory = 'Todas';
 
   @override
   void initState() {
@@ -33,8 +34,6 @@ class _ReportsScreenState extends State<ReportsScreen>
       vsync: this,
     );
 
-    _searchController = TextEditingController();
-
     if (widget.themeMode == ThemeMode.dark) {
       _themeAnimationController.value = 1.0;
     }
@@ -43,24 +42,21 @@ class _ReportsScreenState extends State<ReportsScreen>
   @override
   void dispose() {
     _themeAnimationController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    // Obtener categorías únicas
+    final categories = [
+      'Todas',
+      ...widget.state.transactions.map((e) => e.category).toSet(),
+    ];
 
     return CustomScrollView(
       slivers: [
         SliverAppBar(
-          title: AppleSearchBar(
-            controller: _searchController,
-            onSearchChanged: (value) {
-              setState(() {
-                var _ = value;
-              });
-            },
-          ),
+         
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -85,17 +81,38 @@ class _ReportsScreenState extends State<ReportsScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Financieros - Análisis y tendencias',
-                  style: Theme.of(context).textTheme.titleLarge,
+                // Filtros
+                Row(
+                  children: [
+                    Expanded(
+                      child: FilterChip(
+                        label: _selectedPeriod,
+                        options: const ['Este mes', 'Últimos 3 meses', 'Este año'],
+                        onChanged: (value) {
+                          setState(() => _selectedPeriod = value);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilterChip(
+                        label: _selectedCategory,
+                        options: categories,
+                        onChanged: (value) {
+                          setState(() => _selectedCategory = value);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+                // Tarjetas de estadísticas
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
                     AppleStatCard(
-                      title: 'Variación gastos (este mes)',
+                      title: 'Variación gastos',
                       value: '+${pct(widget.state.reportThisMonthExpenseVarPct)}',
                       icon: Icons.trending_down_rounded,
                       iconColor: Colors.red[400],
@@ -140,49 +157,30 @@ class _ReportsScreenState extends State<ReportsScreen>
   }
 }
 
-/// Barra de búsqueda estilo Apple
-class AppleSearchBar extends StatefulWidget {
-  final TextEditingController controller;
-  final ValueChanged<String> onSearchChanged;
+/// Chip de filtro estilo Apple
+class FilterChip extends StatefulWidget {
+  final String label;
+  final List<String> options;
+  final ValueChanged<String> onChanged;
 
-  const AppleSearchBar({
+  const FilterChip({
     super.key,
-    required this.controller,
-    required this.onSearchChanged,
+    required this.label,
+    required this.options,
+    required this.onChanged,
   });
 
   @override
-  State<AppleSearchBar> createState() => _AppleSearchBarState();
+  State<FilterChip> createState() => _FilterChipState();
 }
 
-class _AppleSearchBarState extends State<AppleSearchBar>
-    with SingleTickerProviderStateMixin {
-  late FocusNode _focusNode;
-  late AnimationController _focusController;
+class _FilterChipState extends State<FilterChip> {
+  late String _currentValue;
 
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
-    _focusController = AnimationController(
-      duration: const Duration(milliseconds: 200),
-      vsync: this,
-    );
-
-    _focusNode.addListener(() {
-      if (_focusNode.hasFocus) {
-        _focusController.forward();
-      } else {
-        _focusController.reverse();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    _focusController.dispose();
-    super.dispose();
+    _currentValue = widget.label;
   }
 
   @override
@@ -190,80 +188,51 @@ class _AppleSearchBarState extends State<AppleSearchBar>
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return AnimatedBuilder(
-      animation: _focusController,
-      builder: (context, child) {
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? cs.surfaceContainerHigh.withOpacity(
-                    0.6 + (_focusController.value * 0.2))
-                : cs.surfaceContainerHighest.withOpacity(
-                    0.8 + (_focusController.value * 0.2)),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: isDark
-                  ? cs.primary.withOpacity(_focusController.value * 0.3)
-                  : cs.outlineVariant.withOpacity(_focusController.value * 0.5),
-              width: 0.5,
-            ),
-            boxShadow: [
-              if (_focusController.value > 0)
-                BoxShadow(
-                  color: cs.primary.withOpacity(_focusController.value * 0.1),
-                  blurRadius: 8 * _focusController.value,
-                  offset: const Offset(0, 2),
-                ),
-            ],
-          ),
-          child: TextField(
-            controller: widget.controller,
-            focusNode: _focusNode,
-            onChanged: widget.onSearchChanged,
-            decoration: InputDecoration(
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                color: cs.onSurfaceVariant.withOpacity(0.6),
-                size: 20,
-              ),
-              suffixIcon: widget.controller.text.isNotEmpty
-                  ? GestureDetector(
-                      onTap: () {
-                        widget.controller.clear();
-                        widget.onSearchChanged('');
-                        setState(() {});
-                      },
-                      child: Icon(
-                        Icons.close_rounded,
-                        color: cs.onSurfaceVariant.withOpacity(0.6),
-                        size: 18,
-                      ),
-                    )
-                  : null,
-              hintText: 'Buscar categoría...',
-              hintStyle: TextStyle(
-                color: cs.onSurfaceVariant.withOpacity(0.5),
-                fontSize: 14,
-              ),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-            ),
-            style: TextStyle(
-              fontSize: 14,
-              color: cs.onSurface,
-            ),
-            cursorColor: cs.primary,
-          ),
-        );
-      },
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: cs.outlineVariant.withOpacity(0.5),
+          width: 0.5,
+        ),
+      ),
+      child: DropdownButton<String>(
+        value: _currentValue,
+        items: widget.options
+            .map((option) => DropdownMenuItem(
+                  value: option,
+                  child: Text(
+                    option,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isDark ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ))
+            .toList(),
+        onChanged: (value) {
+          if (value != null) {
+            setState(() => _currentValue = value);
+            widget.onChanged(value);
+          }
+        },
+        underline: const SizedBox(),
+        isDense: true,
+        isExpanded: true,
+        icon: Icon(
+          Icons.unfold_more_rounded,
+          size: 16,
+          color: cs.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }
 
-/// Toggle de tema estilo Apple - Simple y elegante
+/// Toggle de tema estilo Apple
 class AppleThemeToggle extends StatelessWidget {
   final bool isDark;
   final ValueChanged<bool> onToggle;
@@ -338,7 +307,7 @@ class AppleThemeToggle extends StatelessWidget {
   }
 }
 
-/// Tarjeta de estadísticas estilo Apple - Minimalista y elegante
+/// Tarjeta de estadísticas estilo Apple
 class AppleStatCard extends StatefulWidget {
   final String title;
   final String value;

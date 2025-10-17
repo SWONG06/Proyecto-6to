@@ -3,6 +3,7 @@ import '../models/finance_models.dart';
 import '../widgets/money_text.dart';
 import '../widgets/summary_card.dart';
 import '../widgets/trend_bar_chart.dart';
+import '../widgets/transaction_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   final FinanceAppState state;
@@ -25,6 +26,8 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
   late AnimationController _themeAnimationController;
+  late TextEditingController _searchController;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -35,6 +38,8 @@ class _DashboardScreenState extends State<DashboardScreen>
       vsync: this,
     );
 
+    _searchController = TextEditingController();
+
     if (widget.themeMode == ThemeMode.dark) {
       _themeAnimationController.value = 1.0;
     }
@@ -43,6 +48,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   void dispose() {
     _themeAnimationController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -51,13 +57,126 @@ class _DashboardScreenState extends State<DashboardScreen>
     final cs = Theme.of(context).colorScheme;
     final isDark = widget.themeMode == ThemeMode.dark;
 
+    // Filtrar transacciones basado en búsqueda
+    final filteredTx = widget.state.transactions.where((tx) {
+      final query = _searchQuery.toLowerCase();
+      return _searchQuery.isEmpty ||
+          tx.title.toLowerCase().contains(query) ||
+          tx.category.toLowerCase().contains(query) ||
+          tx.paymentMethod.toLowerCase().contains(query);
+    }).toList();
+
+    // Si hay búsqueda activa, mostrar resultados filtrados
+    if (_searchQuery.isNotEmpty) {
+      return CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            title: SizedBox(
+              height: 40,
+              child: SearchBarAppleHeader(
+                isDark: isDark,
+                controller: _searchController,
+                onSearchChanged: (value) {
+                  setState(() => _searchQuery = value);
+                },
+              ),
+            ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: ModernThemeToggle(
+                  isDark: isDark,
+                  onToggle: (isDarkMode) {
+                    widget.onThemeChanged(isDarkMode);
+                    if (isDarkMode) {
+                      _themeAnimationController.forward();
+                    } else {
+                      _themeAnimationController.reverse();
+                    }
+                  },
+                  animationController: _themeAnimationController,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: AppleIconButton(
+                  icon: Icons.notifications_outlined,
+                  onPressed: () {},
+                ),
+              ),
+              if (widget.onNavigateToProfile != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: AppleIconButton(
+                    icon: Icons.person,
+                    onPressed: widget.onNavigateToProfile ?? () {},
+                  ),
+                ),
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Resultados de búsqueda',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${filteredTx.length} resultado${filteredTx.length == 1 ? '' : 's'}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (filteredTx.isEmpty)
+            SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32.0),
+                  child: Text(
+                    'No hay transacciones que coincidan',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: TransactionCard(tx: filteredTx[index]),
+                ),
+                childCount: filteredTx.length,
+              ),
+            ),
+        ],
+      );
+    }
+
+    // Vista normal sin búsqueda
     return CustomScrollView(
       slivers: [
         SliverAppBar(
           pinned: true,
           title: SizedBox(
             height: 40,
-            child: SearchBarAppleHeader(isDark: isDark),
+            child: SearchBarAppleHeader(
+              isDark: isDark,
+              controller: _searchController,
+              onSearchChanged: (value) {
+                setState(() => _searchQuery = value);
+              },
+            ),
           ),
           actions: [
             Padding(
@@ -273,10 +392,14 @@ class _AppleIconButtonState extends State<AppleIconButton>
 
 class SearchBarAppleHeader extends StatefulWidget {
   final bool isDark;
+  final TextEditingController controller;
+  final ValueChanged<String> onSearchChanged;
 
   const SearchBarAppleHeader({
     super.key,
     required this.isDark,
+    required this.controller,
+    required this.onSearchChanged,
   });
 
   @override
@@ -325,7 +448,9 @@ class _SearchBarAppleHeaderState extends State<SearchBarAppleHeader> {
         ),
       ),
       child: TextField(
+        controller: widget.controller,
         focusNode: _focusNode,
+        onChanged: widget.onSearchChanged,
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           hintText: 'Buscar transacciones...',
@@ -339,7 +464,7 @@ class _SearchBarAppleHeaderState extends State<SearchBarAppleHeader> {
             size: 20,
             color: _isFocused ? cs.primary : cs.onSurface.withOpacity(0.5),
           ),
-          suffixIcon: _isFocused
+          suffixIcon: widget.controller.text.isNotEmpty
               ? IconButton(
                   icon: Icon(
                     Icons.close_rounded,
@@ -347,6 +472,8 @@ class _SearchBarAppleHeaderState extends State<SearchBarAppleHeader> {
                     color: cs.onSurface.withOpacity(0.5),
                   ),
                   onPressed: () {
+                    widget.controller.clear();
+                    widget.onSearchChanged('');
                     _focusNode.unfocus();
                   },
                 )
