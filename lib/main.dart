@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // para haptic feedback
-import 'package:flutter_localizations/flutter_localizations.dart'; // 👈 IMPORTANTE
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'dart:ui';
 import 'utils/theme.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/add_transaction_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/reports_screen.dart';
 import 'screens/qr_screen.dart';
-import 'screens/profile_screen.dart'; // IMPORTAR PROFILE
+import 'screens/profile_screen.dart';
 import 'models/finance_models.dart';
 
 void main() {
@@ -32,18 +33,15 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
       theme: buildTheme().copyWith(useMaterial3: true),
       darkTheme: buildDarkTheme().copyWith(useMaterial3: true),
       themeMode: _themeMode,
-
-      // 👇 localizaciones
       localizationsDelegates: [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('en', ''), // Inglés
-        Locale('es', ''), // Español
+        Locale('en', ''),
+        Locale('es', ''),
       ],
-
       home: MainScreen(
         themeMode: _themeMode,
         onThemeChanged: (bool isDark) {
@@ -56,7 +54,6 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
   }
 }
 
-// WIDGET SEPARADO PARA EL CONTENIDO PRINCIPAL
 class MainScreen extends StatefulWidget {
   final ThemeMode themeMode;
   final ValueChanged<bool> onThemeChanged;
@@ -72,14 +69,10 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; // 0 Inicio, 1 Agregar, 2 Transacciones, 3 Reportes, 99 QR
-  
+  int _currentIndex = 0;
   final FinanceAppState _state = FinanceAppState.seed();
-  
-  // Pantalla QR
   final Widget qrScreen = const QrScreen();
 
-  // FUNCIÓN PARA NAVEGAR A PROFILE
   void _navigateToProfile(BuildContext context) {
     Navigator.push(
       context,
@@ -94,7 +87,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Screens
     final screens = [
       DashboardScreen(
         state: _state,
@@ -118,79 +110,145 @@ class _MainScreenState extends State<MainScreen> {
         onThemeChanged: widget.onThemeChanged,
       ),
     ];
-    
+
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: SafeArea(
-        child: _currentIndex == 99
-            ? qrScreen // Pantalla QR
-            : screens[_currentIndex],
+        child: _currentIndex == 99 ? qrScreen : screens[_currentIndex],
       ),
-
-      // FAB central para QR
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        elevation: 4,
+        backgroundColor: cs.primary,
+        elevation: 0,
         shape: const CircleBorder(),
         onPressed: () {
           HapticFeedback.lightImpact();
-          setState(() {
-            _currentIndex = 99; // Pantalla QR
-          });
+          setState(() => _currentIndex = 99);
         },
-        child: const Icon(Icons.qr_code_2_rounded, size: 32),
+        child: Icon(Icons.qr_code_2_rounded, size: 36, color: Colors.white),
       ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+            child: Container(
+              decoration: BoxDecoration(
+                color: isDark
+                    ? Colors.white.withOpacity(0.08)
+                    : Colors.white.withOpacity(0.15),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.15)
+                      : Colors.white.withOpacity(0.25),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _NavItem(
+                    icon: _currentIndex == 0
+                        ? Icons.home_rounded
+                        : Icons.home_outlined,
+                    isActive: _currentIndex == 0,
+                    onTap: () => setState(() => _currentIndex = 0),
+                  ),
+                  _NavItem(
+                    icon: _currentIndex == 1
+                        ? Icons.add_circle_rounded
+                        : Icons.add_circle_outline,
+                    isActive: _currentIndex == 1,
+                    onTap: () => setState(() => _currentIndex = 1),
+                  ),
+                  SizedBox(width: 48),
+                  _NavItem(
+                    icon: _currentIndex == 2
+                        ? Icons.receipt_long_rounded
+                        : Icons.receipt_long_outlined,
+                    isActive: _currentIndex == 2,
+                    onTap: () => setState(() => _currentIndex = 2),
+                  ),
+                  _NavItem(
+                    icon: _currentIndex == 3
+                        ? Icons.show_chart_rounded
+                        : Icons.show_chart_outlined,
+                    isActive: _currentIndex == 3,
+                    onTap: () => setState(() => _currentIndex = 3),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-      // BottomAppBar con íconos
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            // Lado izquierdo
-            IconButton(
-              icon: Icon(
-                _currentIndex == 0
-                    ? Icons.home_rounded
-                    : Icons.home_outlined,
-              ),
-              onPressed: () {
-                setState(() => _currentIndex = 0);
-              },
-            ),
-            IconButton(
-              icon: Icon(
-                _currentIndex == 1
-                    ? Icons.add_circle_rounded
-                    : Icons.add_circle_outline,
-              ),
-              onPressed: () {
-                setState(() => _currentIndex = 1);
-              },
-            ),
-            const SizedBox(width: 48), // espacio para FAB
-            IconButton(
-              icon: Icon(
-                _currentIndex == 2
-                    ? Icons.receipt_long_rounded
-                    : Icons.receipt_long_outlined,
-              ),
-              onPressed: () {
-                setState(() => _currentIndex = 2);
-              },
-            ),
-            IconButton(
-              icon: Icon(
-                _currentIndex == 3
-                    ? Icons.show_chart_rounded
-                    : Icons.show_chart_outlined,
-              ),
-              onPressed: () {
-                setState(() => _currentIndex = 3);
-              },
-            ),
-          ],
+class _NavItem extends StatefulWidget {
+  final IconData icon;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.isActive,
+    required this.onTap,
+  });
+
+  @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: GestureDetector(
+        onTapDown: (_) => _controller.forward(),
+        onTapUp: (_) {
+          _controller.reverse();
+          HapticFeedback.lightImpact();
+          widget.onTap();
+        },
+        onTapCancel: () => _controller.reverse(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          child: Icon(
+            widget.icon,
+            size: 28,
+            color: widget.isActive ? cs.primary : cs.onSurface.withOpacity(0.6),
+          ),
         ),
       ),
     );
