@@ -86,7 +86,6 @@ class _NotificationIconButtonState extends State<NotificationIconButton>
     final offset = renderBox.localToGlobal(Offset.zero);
     final screenSize = MediaQuery.of(context).size;
 
-    // Calcular posición optimal (evitar que salga de pantalla)
     double rightPosition = screenSize.width - offset.dx - size.width;
     double topPosition = offset.dy + size.height + 8;
 
@@ -141,7 +140,6 @@ class _NotificationIconButtonState extends State<NotificationIconButton>
 
     widget.onPressed();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -215,9 +213,6 @@ class _NotificationIconButtonState extends State<NotificationIconButton>
       ),
     );
   }
-  
-  // ignore: non_constant_identifier_names
-  NotificationFullScreenPage({required List<NotificationItem> notifications, required Null Function(dynamic notification) onNotificationTapped}) {}
 }
 
 class NotificationPanel extends StatefulWidget {
@@ -237,29 +232,68 @@ class NotificationPanel extends StatefulWidget {
 }
 
 class _NotificationPanelState extends State<NotificationPanel> {
-  bool _isFullScreen = false;
-
   int get _unreadCount => widget.notifications.where((n) => !n.isRead).length;
 
-  void _toggleFullScreen() {
-    setState(() => _isFullScreen = !_isFullScreen);
+  void _openFullScreen() {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (dialogContext) {
+        final cs = Theme.of(dialogContext).colorScheme;
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            decoration: BoxDecoration(
+              color: cs.surface,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildDialogHeader(dialogContext, cs),
+                if (widget.notifications.isEmpty)
+                  Expanded(child: _buildEmptyState(dialogContext, cs))
+                else
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: widget.notifications.length,
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        thickness: 0.5,
+                        color: cs.outlineVariant.withOpacity(0.2),
+                      ),
+                      itemBuilder: (context, index) {
+                        final notification = widget.notifications[index];
+                        return NotificationItemWidget(
+                          notification: notification,
+                          onTap: () {
+                            widget.onNotificationTapped?.call(notification);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
-    if (_isFullScreen) {
-      return _buildFullScreenView(context, cs);
-    }
-
     return _buildPanelView(context, cs);
   }
 
   Widget _buildPanelView(BuildContext context, ColorScheme cs) {
     return Container(
       width: 340,
-      constraints: const BoxConstraints(maxHeight: 480),
+      height: 480,
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(12),
@@ -276,15 +310,13 @@ class _NotificationPanelState extends State<NotificationPanel> {
         ],
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildHeader(context, cs, isFullScreen: false),
+          _buildPanelHeader(context, cs),
           if (widget.notifications.isEmpty)
-            _buildEmptyState(context, cs)
+            Expanded(child: _buildEmptyState(context, cs))
           else
-            Flexible(
+            Expanded(
               child: ListView.separated(
-                shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: widget.notifications.length,
                 separatorBuilder: (_, __) => Divider(
@@ -308,48 +340,7 @@ class _NotificationPanelState extends State<NotificationPanel> {
     );
   }
 
-  Widget _buildFullScreenView(BuildContext context, ColorScheme cs) {
-    return Dialog(
-      insetPadding: const EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            _buildHeader(context, cs, isFullScreen: true),
-            if (widget.notifications.isEmpty)
-              Expanded(child: _buildEmptyState(context, cs))
-            else
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  itemCount: widget.notifications.length,
-                  separatorBuilder: (_, __) => Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: cs.outlineVariant.withOpacity(0.2),
-                  ),
-                  itemBuilder: (context, index) {
-                    final notification = widget.notifications[index];
-                    return NotificationItemWidget(
-                      notification: notification,
-                      onTap: () {
-                        widget.onNotificationTapped?.call(notification);
-                      },
-                    );
-                  },
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, ColorScheme cs, {required bool isFullScreen}) {
+  Widget _buildPanelHeader(BuildContext context, ColorScheme cs) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -385,24 +376,67 @@ class _NotificationPanelState extends State<NotificationPanel> {
           ),
           Row(
             children: [
-              if (!isFullScreen)
-                IconButton(
-                  icon: const Icon(Icons.fullscreen_rounded, size: 20),
-                  onPressed: _toggleFullScreen,
-                  tooltip: 'Ver en pantalla completa',
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                ),
               IconButton(
-                icon: Icon(isFullScreen ? Icons.close_rounded : Icons.close_rounded, size: 20),
-                onPressed: isFullScreen ? () {
-                  _toggleFullScreen();
-                } : widget.onClose,
+                icon: const Icon(Icons.fullscreen_rounded, size: 20),
+                onPressed: _openFullScreen,
+                tooltip: 'Ver en pantalla completa',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close_rounded, size: 20),
+                onPressed: widget.onClose,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 style: IconButton.styleFrom(shape: const CircleBorder()),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDialogHeader(BuildContext context, ColorScheme cs) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: cs.outlineVariant.withOpacity(0.3),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Notificaciones',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              if (_unreadCount > 0)
+                Text(
+                  '$_unreadCount sin leer',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: cs.primary,
+                    fontSize: 11,
+                  ),
+                ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.close_rounded, size: 20),
+            onPressed: () => Navigator.of(context).pop(),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            style: IconButton.styleFrom(shape: const CircleBorder()),
           ),
         ],
       ),
