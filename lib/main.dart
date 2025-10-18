@@ -24,6 +24,28 @@ class FinanceCloudApp extends StatefulWidget {
 
 class _FinanceCloudAppState extends State<FinanceCloudApp> {
   ThemeMode _themeMode = ThemeMode.system;
+  bool _isAutomaticTheme = false;
+
+  bool _isDarkModeByTime() {
+    final hour = DateTime.now().hour;
+    return hour >= 20 || hour < 6;
+  }
+
+  void _updateThemeMode(bool isDark) {
+    setState(() {
+      _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  void _updateAutomaticTheme(bool isAutomatic) {
+    setState(() {
+      _isAutomaticTheme = isAutomatic;
+      if (isAutomatic) {
+        final isDarkNow = _isDarkModeByTime();
+        _themeMode = isDarkNow ? ThemeMode.dark : ThemeMode.light;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,11 +66,9 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
       ],
       home: MainScreen(
         themeMode: _themeMode,
-        onThemeChanged: (bool isDark) {
-          setState(() {
-            _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
-          });
-        },
+        isAutomaticTheme: _isAutomaticTheme,
+        onThemeChanged: _updateThemeMode,
+        onAutomaticThemeChanged: _updateAutomaticTheme,
       ),
     );
   }
@@ -56,12 +76,16 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
 
 class MainScreen extends StatefulWidget {
   final ThemeMode themeMode;
+  final bool isAutomaticTheme;
   final ValueChanged<bool> onThemeChanged;
+  final ValueChanged<bool> onAutomaticThemeChanged;
 
   const MainScreen({
     super.key,
     required this.themeMode,
+    required this.isAutomaticTheme,
     required this.onThemeChanged,
+    required this.onAutomaticThemeChanged,
   });
 
   @override
@@ -120,7 +144,9 @@ class _MainScreenState extends State<MainScreen> {
       case 100:
         return SettingsScreen(
           themeMode: widget.themeMode,
+          isAutomaticTheme: widget.isAutomaticTheme,
           onThemeChanged: widget.onThemeChanged,
+          onAutomaticThemeChanged: widget.onAutomaticThemeChanged,
         );
       default:
         return DashboardScreen(
@@ -146,7 +172,6 @@ class _MainScreenState extends State<MainScreen> {
       {'icon': Icons.settings_rounded, 'label': 'Ajustes', 'index': 100},
     ];
 
-    // Obtener el título según el índice actual
     String getCurrentTitle() {
       final item = menuItems.firstWhere(
         (item) => item['index'] == _currentIndex,
