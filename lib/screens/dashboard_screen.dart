@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart';
 import '../widgets/money_text.dart';
-import '../widgets/summary_card.dart';
 import '../widgets/trend_bar_chart.dart';
 import '../widgets/transaction_card.dart';
 
@@ -32,12 +31,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   void initState() {
     super.initState();
-
     _themeAnimationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-
     _searchController = TextEditingController();
 
     if (widget.themeMode == ThemeMode.dark) {
@@ -57,7 +54,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     final cs = Theme.of(context).colorScheme;
     final isDark = widget.themeMode == ThemeMode.dark;
 
-    // Filtrar transacciones basado en búsqueda
     final filteredTx = widget.state.transactions.where((tx) {
       final query = _searchQuery.toLowerCase();
       return _searchQuery.isEmpty ||
@@ -66,104 +62,28 @@ class _DashboardScreenState extends State<DashboardScreen>
           tx.paymentMethod.toLowerCase().contains(query);
     }).toList();
 
-    // Si hay búsqueda activa, mostrar resultados filtrados
     if (_searchQuery.isNotEmpty) {
-      return CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            title: SizedBox(
-              height: 40,
-              child: SearchBarAppleHeader(
-                isDark: isDark,
-                controller: _searchController,
-                onSearchChanged: (value) {
-                  setState(() => _searchQuery = value);
-                },
-              ),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: ModernThemeToggle(
-                  isDark: isDark,
-                  onToggle: (isDarkMode) {
-                    widget.onThemeChanged(isDarkMode);
-                    if (isDarkMode) {
-                      _themeAnimationController.forward();
-                    } else {
-                      _themeAnimationController.reverse();
-                    }
-                  },
-                  animationController: _themeAnimationController,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: AppleIconButton(
-                  icon: Icons.notifications_outlined,
-                  onPressed: () {},
-                ),
-              ),
-              if (widget.onNavigateToProfile != null)
-                Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: AppleIconButton(
-                    icon: Icons.person,
-                    onPressed: widget.onNavigateToProfile ?? () {},
-                  ),
-                ),
-            ],
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Resultados de búsqueda',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${filteredTx.length} resultado${filteredTx.length == 1 ? '' : 's'}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (filteredTx.isEmpty)
-            SliverToBoxAdapter(
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Text(
-                    'No hay transacciones que coincidan',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ),
-              ),
-            )
-          else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: TransactionCard(tx: filteredTx[index]),
-                ),
-                childCount: filteredTx.length,
-              ),
-            ),
-        ],
+      return _SearchResultsView(
+        isDark: isDark,
+        cs: cs,
+        filteredTx: filteredTx,
+        searchController: _searchController,
+        onSearchChanged: (value) {
+          setState(() => _searchQuery = value);
+        },
+        onThemeChanged: (isDarkMode) {
+          widget.onThemeChanged(isDarkMode);
+          if (isDarkMode) {
+            _themeAnimationController.forward();
+          } else {
+            _themeAnimationController.reverse();
+          }
+        },
+        onNavigateToProfile: widget.onNavigateToProfile,
+        animationController: _themeAnimationController,
       );
     }
 
-    // Vista normal sin búsqueda
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -179,21 +99,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: ModernThemeToggle(
-                isDark: isDark,
-                onToggle: (isDarkMode) {
-                  widget.onThemeChanged(isDarkMode);
-                  if (isDarkMode) {
-                    _themeAnimationController.forward();
-                  } else {
-                    _themeAnimationController.reverse();
-                  }
-                },
-                animationController: _themeAnimationController,
-              ),
-            ),
+
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: AppleIconButton(
@@ -213,71 +119,212 @@ class _DashboardScreenState extends State<DashboardScreen>
         ),
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: _HeaderCard(state: widget.state),
-          ),
-        ),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 0),
+            padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SummaryCard(
-                  label: 'Ingresos mensuales',
-                  value: widget.state.monthlyIncome,
-                  icon: AppleIcon.arrowUpRight,
-                  color: Colors.green[700],
+                Text(
+                  'Tendencia mensual',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
-                SummaryCard(
-                  label: 'Gastos mensuales',
-                  value: widget.state.monthlyExpense,
-                  icon: AppleIcon.arrowDownLeft,
-                  color: cs.error,
-                ),
-                SummaryCard(
-                  label: 'Total ingresos',
-                  value: widget.state.totalIncomeAllTime,
-                  icon: AppleIcon.chartUp,
-                ),
-                SummaryCard(
-                  label: 'Total gastos',
-                  value: widget.state.totalExpenseAllTime,
-                  icon: AppleIcon.chartDown,
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Tendencia mensual',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 20, fontWeight: FontWeight.w800),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 TrendBarChart(
                   labels: widget.state.months,
                   values: widget.state.monthlyTrend,
                 ),
-                const SizedBox(height: 8),
               ],
             ),
           ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: _BalanceCard(state: widget.state),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: _SummaryGridView(state: widget.state, cs: cs),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: const SizedBox(height: 16),
         ),
       ],
     );
   }
 }
 
-class _HeaderCard extends StatelessWidget {
+class _SearchResultsView extends StatelessWidget {
+  final bool isDark;
+  final ColorScheme cs;
+  final List filteredTx;
+  final TextEditingController searchController;
+  final ValueChanged<String> onSearchChanged;
+  final ValueChanged<bool> onThemeChanged;
+  final VoidCallback? onNavigateToProfile;
+  final AnimationController animationController;
+
+  const _SearchResultsView({
+    required this.isDark,
+    required this.cs,
+    required this.filteredTx,
+    required this.searchController,
+    required this.onSearchChanged,
+    required this.onThemeChanged,
+    required this.onNavigateToProfile,
+    required this.animationController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScrollView(
+      slivers: [
+        SliverAppBar(
+          pinned: true,
+          title: SizedBox(
+            height: 40,
+            child: SearchBarAppleHeader(
+              isDark: isDark,
+              controller: searchController,
+              onSearchChanged: onSearchChanged,
+            ),
+          ),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: ModernThemeToggle(
+                isDark: isDark,
+                onToggle: onThemeChanged,
+                animationController: animationController,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: AppleIconButton(
+                icon: Icons.notifications_outlined,
+                onPressed: () {},
+              ),
+            ),
+            if (onNavigateToProfile != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: AppleIconButton(
+                  icon: Icons.person,
+                  onPressed: onNavigateToProfile ?? () {},
+                ),
+              ),
+          ],
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Resultados de búsqueda',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${filteredTx.length} resultado${filteredTx.length == 1 ? '' : 's'}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (filteredTx.isEmpty)
+          SliverToBoxAdapter(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Text(
+                  'No hay transacciones que coincidan',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
+            ),
+          )
+        else
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: TransactionCard(tx: filteredTx[index]),
+              ),
+              childCount: filteredTx.length,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SummaryGridView extends StatelessWidget {
+  final FinanceAppState state;
+  final ColorScheme cs;
+
+  const _SummaryGridView({
+    required this.state,
+    required this.cs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.1,
+      children: [
+        _SummaryGridCard(
+          label: 'Ingresos mensuales',
+          value: state.monthlyIncome,
+          icon: AppleIcon.arrowUpRight,
+          color: Colors.green[700],
+        ),
+        _SummaryGridCard(
+          label: 'Gastos mensuales',
+          value: state.monthlyExpense,
+          icon: AppleIcon.arrowDownLeft,
+          color: cs.error,
+        ),
+        _SummaryGridCard(
+          label: 'Total ingresos',
+          value: state.totalIncomeAllTime,
+          icon: AppleIcon.chartUp,
+          color: Colors.blue[700],
+        ),
+        _SummaryGridCard(
+          label: 'Total gastos',
+          value: state.totalExpenseAllTime,
+          icon: AppleIcon.chartDown,
+          color: Colors.orange[700],
+        ),
+      ],
+    );
+  }
+}
+
+class _BalanceCard extends StatelessWidget {
   final FinanceAppState state;
 
-  const _HeaderCard({required this.state});
+  const _BalanceCard({required this.state});
 
   @override
   Widget build(BuildContext context) {
     final balance = state.currentBalance ?? 0.0;
-    final userName = state.userName ?? 'Usuario';
 
     return Card(
       child: Padding(
@@ -286,16 +333,72 @@ class _HeaderCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Bienvenido, $userName',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 26, fontWeight: FontWeight.w800),
+              'Tu balance actual',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            MoneyText(balance, fontSize: 24,),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SummaryGridCard extends StatelessWidget {
+  final String label;
+  final double value;
+  final IconData icon;
+  final Color? color;
+
+  const _SummaryGridCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: (color ?? cs.primary).withOpacity(0.1),
+              ),
+              child: Icon(
+                icon,
+                size: 18,
+                color: color ?? cs.primary,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Tu balance actual es:',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 18, fontWeight: FontWeight.w700),
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
-            MoneyText(balance),
+            Flexible(
+              child: MoneyText(value, fontSize: 24,),
+            ),
           ],
         ),
       ),

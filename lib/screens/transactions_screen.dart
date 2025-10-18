@@ -79,23 +79,6 @@ class _TransactionsScreenState extends State<TransactionsScreen>
             setState(() => _query = value);
           },
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: AppleThemeToggle(
-              isDark: widget.themeMode == ThemeMode.dark,
-              onToggle: (isDark) {
-                widget.onThemeChanged(isDark);
-                if (isDark) {
-                  _themeAnimationController.forward();
-                } else {
-                  _themeAnimationController.reverse();
-                }
-              },
-              animationController: _themeAnimationController,
-            ),
-          ),
-        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,82 +264,6 @@ class _AppleSearchBarState extends State<AppleSearchBar>
   }
 }
 
-/// Toggle de tema estilo Apple - Simple y elegante
-class AppleThemeToggle extends StatelessWidget {
-  final bool isDark;
-  final ValueChanged<bool> onToggle;
-  final AnimationController animationController;
-
-  const AppleThemeToggle({
-    super.key,
-    required this.isDark,
-    required this.onToggle,
-    required this.animationController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return AnimatedBuilder(
-      animation: animationController,
-      builder: (context, child) {
-        return GestureDetector(
-          onTap: () => onToggle(!isDark),
-          child: Container(
-            width: 52,
-            height: 30,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              color: isDark
-                  ? cs.primary.withOpacity(0.2)
-                  : cs.surfaceContainerHighest,
-              border: Border.all(
-                color: isDark
-                    ? cs.primary.withOpacity(0.3)
-                    : Colors.transparent,
-              ),
-            ),
-            child: Stack(
-              children: [
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  top: 3,
-                  left: isDark ? 26 : 3,
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark ? cs.primary : Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                        size: 14,
-                        color: isDark ? Colors.white : cs.outline,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
 /// Dropdown estilo Apple - Minimalista
 class AppleDropdownButton extends StatefulWidget {
   final String value;
@@ -412,7 +319,10 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
                   value: item,
                   child: Text(
                     item,
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: textColor),
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: textColor),
                   ),
                 ))
             .toList(),

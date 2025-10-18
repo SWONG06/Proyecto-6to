@@ -1,3 +1,4 @@
+import 'package:financecloud/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -116,6 +117,11 @@ class _MainScreenState extends State<MainScreen> {
         );
       case 99:
         return const QrScreen();
+      case 100:
+        return SettingsScreen(
+          themeMode: widget.themeMode,
+          onThemeChanged: widget.onThemeChanged,
+        );
       default:
         return DashboardScreen(
           state: _state,
@@ -137,6 +143,7 @@ class _MainScreenState extends State<MainScreen> {
       {'icon': Icons.receipt_long_rounded, 'label': 'Transacciones', 'index': 2},
       {'icon': Icons.show_chart_rounded, 'label': 'Reportes', 'index': 3},
       {'icon': Icons.qr_code_2_rounded, 'label': 'QR', 'index': 99},
+      {'icon': Icons.settings_rounded, 'label': 'Ajustes', 'index': 100},
     ];
 
     // Obtener el título según el índice actual
@@ -204,8 +211,7 @@ class _MainScreenState extends State<MainScreen> {
                               fontWeight: isActive
                                   ? FontWeight.w700
                                   : FontWeight.w600,
-                              color:
-                                  isActive ? cs.primary : cs.onSurface,
+                              color: isActive ? cs.primary : cs.onSurface,
                             ),
                           ),
                         ],

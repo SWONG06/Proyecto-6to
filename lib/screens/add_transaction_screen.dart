@@ -7,14 +7,10 @@ import '../services/gemini_service.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final void Function(FinanceTransaction) onSaved;
-  final ThemeMode themeMode;
-  final void Function(bool isDark) onThemeChanged;
 
   const AddTransactionScreen({
     super.key,
-    required this.onSaved,
-    this.themeMode = ThemeMode.system,
-    required this.onThemeChanged,
+    required this.onSaved, required ThemeMode themeMode, required ValueChanged<bool> onThemeChanged,
   });
 
   @override
@@ -25,7 +21,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   TxType _type = TxType.expense;
-  late AnimationController _themeAnimationController;
   String? _snackBarMessage;
 
   // Clave de API (usa una variable segura en producción)
@@ -62,13 +57,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   @override
   void initState() {
     super.initState();
-    _themeAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    if (widget.themeMode == ThemeMode.dark) {
-      _themeAnimationController.value = 1.0;
-    }
   }
 
   @override
@@ -76,7 +64,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     _amountCtrl.dispose();
     _dateCtrl.dispose();
     _descCtrl.dispose();
-    _themeAnimationController.dispose();
     super.dispose();
   }
 
@@ -179,10 +166,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               _paymentMethods.contains(data['paymentMethod'])) {
             _selectedMethod = data['paymentMethod'];
           }
+          _snackBarMessage = 'Datos extraídos del recibo';
         });
-        _snackBarMessage = 'Datos extraídos del recibo';
       } else {
-        _snackBarMessage = 'No se pudieron extraer datos del recibo';
+        setState(() => _snackBarMessage = 'No se pudieron extraer datos del recibo');
       }
     } catch (e) {
       if (!mounted) return;
@@ -217,16 +204,16 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final labelColor = isDark ? Colors.white70 : Colors.black87;
-    final textColor = isDark ? Colors.white : Colors.black;
+    // Se han eliminado las variables isDark, labelColor y textColor.
+    final labelColor = Colors.black87; // Valor por defecto
+    final textColor = Colors.black; // Valor por defecto
 
     if (_snackBarMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(_snackBarMessage!)));
-        _snackBarMessage = null;
+        setState(() => _snackBarMessage = null);
       });
     }
 
@@ -236,148 +223,215 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: AppleIconButton(
-              icon: Icons.camera,
+              icon: Icons.camera_alt_rounded,
               onPressed: _scanReceipt,
               tooltip: 'Escanear Recibo',
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: AppleThemeToggle(
-              isDark: widget.themeMode == ThemeMode.dark,
-              onToggle: (isDark) {
-                widget.onThemeChanged(isDark);
-                if (isDark) {
-                  _themeAnimationController.forward();
-                } else {
-                  _themeAnimationController.reverse();
-                }
-              },
-              animationController: _themeAnimationController,
-            ),
-          ),
+          // Se eliminó el AppleThemeToggle
         ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
         child: Form(
           key: _formKey,
-          child: Column(children: [
-            SegmentedButton<TxType>(
-              segments: const [
-                ButtonSegment(
+          child: Column(
+            children: [
+              SegmentedButton<TxType>(
+                segments: const [
+                  ButtonSegment(
                     value: TxType.expense,
                     icon: Icon(Icons.arrow_downward_rounded),
-                    label: Text('Gasto', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
-                ButtonSegment(
+                    label: Text(
+                      'Gasto',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  ButtonSegment(
                     value: TxType.income,
                     icon: Icon(Icons.arrow_upward_rounded),
-                    label: Text('Ingreso', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600))),
-              ],
-              selected: {_type},
-              onSelectionChanged: (s) => setState(() => _type = s.first),
-            ),
-            const SizedBox(height: 12),
-
-            TextFormField(
-              controller: _amountCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: textColor),
-              decoration: InputDecoration(
-                labelText: 'Monto*',
-                prefixText: r'$ ',
-                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                    label: Text(
+                      'Ingreso',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+                selected: {_type},
+                onSelectionChanged: (s) => setState(() => _type = s.first),
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Requerido' : null,
-            ),
-            const SizedBox(height: 12),
-
-            DropdownButtonFormField<String>(
-              value: _selectedCategory,
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor),
-              decoration: InputDecoration(
-                labelText: 'Categoría*',
-                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _amountCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Monto*',
+                  prefixText: r'$ ',
+                  labelStyle: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
               ),
-              items: _categories
-                  .map((cat) => DropdownMenuItem(
-                    value: cat,
-                    child: Text(cat, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textColor)),
-                  ))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedCategory = val),
-              validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
-            ),
-            const SizedBox(height: 12),
-
-            TextFormField(
-              controller: _dateCtrl,
-              readOnly: true,
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor),
-              decoration: InputDecoration(
-                labelText: 'Fecha*',
-                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                suffixIcon: IconButton(
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Categoría*',
+                  labelStyle: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                items: _categories
+                    .map((cat) => DropdownMenuItem(
+                          value: cat,
+                          child: Text(
+                            cat,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: textColor,
+                            ),
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (val) => setState(() => _selectedCategory = val),
+                validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _dateCtrl,
+                readOnly: true,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Fecha*',
+                  labelStyle: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                  suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_today_rounded, size: 26),
-                    onPressed: _pickDate),
+                    onPressed: _pickDate,
+                  ),
+                ),
+                validator: (_) => _selectedDate == null ? 'Requerido' : null,
               ),
-              validator: (_) => _selectedDate == null ? 'Requerido' : null,
-            ),
-            const SizedBox(height: 12),
-
-            DropdownButtonFormField<String>(
-              value: _selectedMethod,
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor),
-              decoration: InputDecoration(
-                labelText: 'Método de pago',
-                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: _selectedMethod,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Método de pago',
+                  labelStyle: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                items: _paymentMethods
+                    .map((method) => DropdownMenuItem(
+                          value: method,
+                          child: Text(
+                            method,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: textColor,
+                            ),
+                          ),
+                        ))
+                    .toList(),
+                onChanged: (val) => setState(() => _selectedMethod = val),
               ),
-              items: _paymentMethods
-                  .map((method) =>
-                      DropdownMenuItem(
-                        value: method,
-                        child: Text(method, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: textColor)),
-                      ))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedMethod = val),
-            ),
-            const SizedBox(height: 12),
-
-            TextFormField(
-              controller: _descCtrl,
-              minLines: 2,
-              maxLines: 4,
-              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: textColor),
-              decoration: InputDecoration(
-                labelText: 'Descripción*',
-                labelStyle: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: labelColor),
-                contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _descCtrl,
+                minLines: 2,
+                maxLines: 4,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Descripción*',
+                  labelStyle: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: labelColor,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
               ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Requerido' : null,
-            ),
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _submit,
-                icon: const Icon(Icons.check_rounded, size: 22),
-                label: const Text('Guardar Transacción', 
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                style: FilledButton.styleFrom(
-                  backgroundColor: cs.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _submit,
+                  icon: const Icon(Icons.check_rounded, size: 22),
+                  label: const Text(
+                    'Guardar Transacción',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: cs.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
                 ),
               ),
-            ),
-          ]),
+            ],
+          ),
         ),
       ),
     );
@@ -429,13 +483,6 @@ class _AppleIconButtonState extends State<AppleIconButton>
     super.dispose();
   }
 
-  void _onPressed() {
-    _controller.forward().then((_) {
-      _controller.reverse();
-    });
-    widget.onPressed();
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -448,7 +495,7 @@ class _AppleIconButtonState extends State<AppleIconButton>
           onTapDown: (_) => _controller.forward(),
           onTapUp: (_) {
             _controller.reverse();
-            _onPressed();
+            widget.onPressed();
           },
           onTapCancel: () => _controller.reverse(),
           child: Container(
@@ -470,77 +517,4 @@ class _AppleIconButtonState extends State<AppleIconButton>
   }
 }
 
-/// Toggle de tema estilo Apple - Simple y elegante
-class AppleThemeToggle extends StatelessWidget {
-  final bool isDark;
-  final ValueChanged<bool> onToggle;
-  final AnimationController animationController;
-
-  const AppleThemeToggle({
-    super.key,
-    required this.isDark,
-    required this.onToggle,
-    required this.animationController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return AnimatedBuilder(
-      animation: animationController,
-      builder: (context, child) {
-        return GestureDetector(
-          onTap: () => onToggle(!isDark),
-          child: Container(
-            width: 52,
-            height: 30,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              color: isDark
-                  ? cs.primary.withOpacity(0.2)
-                  : cs.surfaceContainerHighest,
-              border: Border.all(
-                color: isDark
-                    ? cs.primary.withOpacity(0.3)
-                    : Colors.transparent,
-              ),
-            ),
-            child: Stack(
-              children: [
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  top: 3,
-                  left: isDark ? 26 : 3,
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark ? cs.primary : Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        isDark ? Icons.dark_mode : Icons.light_mode,
-                        size: 14,
-                        color: isDark ? Colors.white : cs.outline,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
+// Se eliminó la clase AppleThemeToggle.

@@ -36,7 +36,7 @@ class TransactionCard extends StatelessWidget {
         trailing: MoneyText(
           isExpense ? -tx.amount : tx.amount,
           color: isExpense ? cs.error : Colors.green,
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: const TextStyle(fontWeight: FontWeight.w700), fontSize: 24,
         ),
       ),
     );

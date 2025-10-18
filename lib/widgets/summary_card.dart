@@ -86,7 +86,7 @@ class SummaryCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         letterSpacing: -0.5,
-                      ),
+                      ), fontSize: 24,
                     ),
                     if (helper != null) ...[
                       const SizedBox(height: 4),

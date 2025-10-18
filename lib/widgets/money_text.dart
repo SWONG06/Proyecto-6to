@@ -6,7 +6,7 @@ class MoneyText extends StatelessWidget {
   final TextStyle? style;
   final Color? color;
 
-  const MoneyText(this.value, {super.key, this.style, this.color});
+  const MoneyText(this.value, {super.key, this.style, this.color, required int fontSize});
 
   @override
   Widget build(BuildContext context) {
