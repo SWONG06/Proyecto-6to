@@ -119,7 +119,7 @@ class _MainScreenState extends State<MainScreen> {
           state: _state,
           themeMode: widget.themeMode,
           onThemeChanged: widget.onThemeChanged,
-          onNavigateToProfile: () => _navigateToProfile(context),
+          onNavigateToProfile: () => _navigateToProfile(context), notifications: [],
         );
       case 1:
         return AddTransactionScreen(
@@ -153,7 +153,7 @@ class _MainScreenState extends State<MainScreen> {
           state: _state,
           themeMode: widget.themeMode,
           onThemeChanged: widget.onThemeChanged,
-          onNavigateToProfile: () => _navigateToProfile(context),
+          onNavigateToProfile: () => _navigateToProfile(context), notifications: [],
         );
     }
   }

@@ -56,6 +56,202 @@ class _SettingsScreenState extends State<SettingsScreen>
     return 'Modo oscuro: 20:00 - 06:00';
   }
 
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Encabezado
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(
+                            Icons.cloud_rounded,
+                            size: 50,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'FinanceCloud',
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'v1.0.0',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Descripción
+                  Text(
+                    'Acerca de la Aplicación',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'FinanceCloud es tu asistente personal para la gestión inteligente de tus finanzas. '
+                    'Con una interfaz moderna y herramientas avanzadas, puedes controlar tus gastos, '
+                    'ingresos y generar reportes detallados para tomar decisiones financieras más informadas.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Características principales
+                  Text(
+                    'Características Principales',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildFeatureItem(context, Icons.dashboard_rounded, 'Dashboard', 'Visualiza un resumen completo de tus finanzas'),
+                  _buildFeatureItem(context, Icons.add_circle_rounded, 'Transacciones', 'Registra y categoriza tus gastos e ingresos'),
+                  _buildFeatureItem(context, Icons.show_chart_rounded, 'Reportes', 'Analiza tendencias y patrones de gasto'),
+                  _buildFeatureItem(context, Icons.qr_code_2_rounded, 'Código QR', 'Escanea y procesa información rápidamente'),
+                  const SizedBox(height: 24),
+
+                  // Información técnica
+                  Text(
+                    'Información Técnica',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildInfoRow(context, 'Versión:', '1.0.0'),
+                  _buildInfoRow(context, 'Plataforma:', 'Flutter'),
+                  _buildInfoRow(context, 'Material Design:', '3.0'),
+                  const SizedBox(height: 24),
+
+                  // Licencia
+                  Text(
+                    'Licencia y Derechos de Autor',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '© 2025 FinanceCloud. Todos los derechos reservados.\n\n'
+                    'Esta aplicación se proporciona bajo licencia de uso. Se prohíbe la reproducción, '
+                    'distribución o transmisión sin permiso expreso.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Botón cerrar
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cerrar'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeatureItem(BuildContext context, IconData icon, String title, String description) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: cs.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: cs.primary,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -234,14 +430,7 @@ class _SettingsScreenState extends State<SettingsScreen>
               color: cs.primary,
             ),
             title: const Text('Acerca de'),
-            onTap: () {
-              showAboutDialog(
-                context: context,
-                applicationName: 'FinanceCloud',
-                applicationVersion: '1.0.0',
-                applicationLegalese: '© 2025 FinanceCloud',
-              );
-            },
+            onTap: () => _showAboutDialog(context),
           ),
         ),
         const SizedBox(height: 32),

@@ -1,3 +1,4 @@
+import 'package:financecloud/screens/notification_icon_button.dart';
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart';
 import '../widgets/money_text.dart';
@@ -6,16 +7,14 @@ import '../widgets/transaction_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   final FinanceAppState state;
-  final ThemeMode themeMode;
-  final void Function(bool isDark) onThemeChanged;
   final VoidCallback? onNavigateToProfile;
+  final List<NotificationItem> notifications;
 
   const DashboardScreen({
     super.key,
     required this.state,
-    required this.themeMode,
-    required this.onThemeChanged,
     required this.onNavigateToProfile,
+    required this.notifications, required ThemeMode themeMode, required ValueChanged<bool> onThemeChanged,
   });
 
   @override
@@ -24,27 +23,19 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
-  late AnimationController _themeAnimationController;
   late TextEditingController _searchController;
   String _searchQuery = '';
+  late List<NotificationItem> _notifications;
 
   @override
   void initState() {
     super.initState();
-    _themeAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
     _searchController = TextEditingController();
-
-    if (widget.themeMode == ThemeMode.dark) {
-      _themeAnimationController.value = 1.0;
-    }
+    _notifications = widget.notifications;
   }
 
   @override
   void dispose() {
-    _themeAnimationController.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -52,7 +43,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = widget.themeMode == ThemeMode.dark;
 
     final filteredTx = widget.state.transactions.where((tx) {
       final query = _searchQuery.toLowerCase();
@@ -64,23 +54,14 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     if (_searchQuery.isNotEmpty) {
       return _SearchResultsView(
-        isDark: isDark,
         cs: cs,
         filteredTx: filteredTx,
         searchController: _searchController,
         onSearchChanged: (value) {
           setState(() => _searchQuery = value);
         },
-        onThemeChanged: (isDarkMode) {
-          widget.onThemeChanged(isDarkMode);
-          if (isDarkMode) {
-            _themeAnimationController.forward();
-          } else {
-            _themeAnimationController.reverse();
-          }
-        },
         onNavigateToProfile: widget.onNavigateToProfile,
-        animationController: _themeAnimationController,
+        notifications: _notifications,
       );
     }
 
@@ -91,7 +72,6 @@ class _DashboardScreenState extends State<DashboardScreen>
           title: SizedBox(
             height: 40,
             child: SearchBarAppleHeader(
-              isDark: isDark,
               controller: _searchController,
               onSearchChanged: (value) {
                 setState(() => _searchQuery = value);
@@ -99,12 +79,14 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
           actions: [
-
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: AppleIconButton(
-                icon: Icons.notifications_outlined,
-                onPressed: () {},
+              child: NotificationIconButton(
+                notificationCount: _notifications.where((n) => !n.isRead).length,
+                onPressed: () {
+                  // Callback cuando se presiona el botón
+                },
+                notifications: _notifications,
               ),
             ),
             if (widget.onNavigateToProfile != null)
@@ -160,24 +142,20 @@ class _DashboardScreenState extends State<DashboardScreen>
 }
 
 class _SearchResultsView extends StatelessWidget {
-  final bool isDark;
   final ColorScheme cs;
   final List filteredTx;
   final TextEditingController searchController;
   final ValueChanged<String> onSearchChanged;
-  final ValueChanged<bool> onThemeChanged;
   final VoidCallback? onNavigateToProfile;
-  final AnimationController animationController;
+  final List<NotificationItem> notifications;
 
   const _SearchResultsView({
-    required this.isDark,
     required this.cs,
     required this.filteredTx,
     required this.searchController,
     required this.onSearchChanged,
-    required this.onThemeChanged,
     required this.onNavigateToProfile,
-    required this.animationController,
+    required this.notifications,
   });
 
   @override
@@ -189,7 +167,6 @@ class _SearchResultsView extends StatelessWidget {
           title: SizedBox(
             height: 40,
             child: SearchBarAppleHeader(
-              isDark: isDark,
               controller: searchController,
               onSearchChanged: onSearchChanged,
             ),
@@ -197,17 +174,10 @@ class _SearchResultsView extends StatelessWidget {
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: ModernThemeToggle(
-                isDark: isDark,
-                onToggle: onThemeChanged,
-                animationController: animationController,
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: AppleIconButton(
-                icon: Icons.notifications_outlined,
+              child: NotificationIconButton(
+                notificationCount: notifications.where((n) => !n.isRead).length,
                 onPressed: () {},
+                notifications: notifications,
               ),
             ),
             if (onNavigateToProfile != null)
@@ -337,10 +307,13 @@ class _BalanceCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-              ),
+                  ),
             ),
             const SizedBox(height: 8),
-            MoneyText(balance, fontSize: 24,),
+            MoneyText(
+              balance,
+              fontSize: 24,
+            ),
           ],
         ),
       ),
@@ -391,13 +364,16 @@ class _SummaryGridCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-              ),
+                  ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Flexible(
-              child: MoneyText(value, fontSize: 24,),
+              child: MoneyText(
+                value,
+                fontSize: 24,
+              ),
             ),
           ],
         ),
@@ -494,13 +470,11 @@ class _AppleIconButtonState extends State<AppleIconButton>
 }
 
 class SearchBarAppleHeader extends StatefulWidget {
-  final bool isDark;
   final TextEditingController controller;
   final ValueChanged<String> onSearchChanged;
 
   const SearchBarAppleHeader({
     super.key,
-    required this.isDark,
     required this.controller,
     required this.onSearchChanged,
   });
@@ -539,14 +513,10 @@ class _SearchBarAppleHeaderState extends State<SearchBarAppleHeader> {
 
     return Container(
       decoration: BoxDecoration(
-        color: _isFocused
-            ? cs.surfaceContainerHigh
-            : cs.surfaceContainerHighest,
+        color: _isFocused ? cs.surfaceContainerHigh : cs.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
-          color: _isFocused
-              ? cs.primary.withOpacity(0.3)
-              : Colors.transparent,
+          color: _isFocused ? cs.primary.withOpacity(0.3) : Colors.transparent,
           width: 1.5,
         ),
       ),
@@ -588,81 +558,6 @@ class _SearchBarAppleHeaderState extends State<SearchBarAppleHeader> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class ModernThemeToggle extends StatelessWidget {
-  final bool isDark;
-  final ValueChanged<bool> onToggle;
-  final AnimationController animationController;
-
-  const ModernThemeToggle({
-    super.key,
-    required this.isDark,
-    required this.onToggle,
-    required this.animationController,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return AnimatedBuilder(
-      animation: animationController,
-      builder: (context, child) {
-        return GestureDetector(
-          onTap: () => onToggle(!isDark),
-          child: Container(
-            width: 52,
-            height: 30,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
-              color: isDark
-                  ? cs.primary.withOpacity(0.2)
-                  : cs.surfaceContainerHighest,
-              border: Border.all(
-                color: isDark
-                    ? cs.primary.withOpacity(0.3)
-                    : Colors.transparent,
-              ),
-            ),
-            child: Stack(
-              children: [
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 200),
-                  curve: Curves.easeInOut,
-                  top: 3,
-                  left: isDark ? 26 : 3,
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isDark ? cs.primary : Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        isDarkMode ? Icons.dark_mode : Icons.light_mode,
-                        size: 14,
-                        color: isDarkMode ? Colors.white : cs.outline,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
