@@ -11,6 +11,7 @@ class DashboardScreen extends StatefulWidget {
   final VoidCallback? onNavigateToProfile;
   final ThemeMode themeMode;
   final ValueChanged<bool> onThemeChanged;
+  final List<NotificationItem> notifications;
 
   const DashboardScreen({
     super.key,
@@ -18,7 +19,7 @@ class DashboardScreen extends StatefulWidget {
     required this.onNavigateToProfile,
     required this.themeMode,
     required this.onThemeChanged,
-    required List<NotificationItem> notifications,
+    required this.notifications,
   });
 
   @override
@@ -29,7 +30,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
   late TextEditingController _searchController;
   String _searchQuery = '';
-  String _chartType = 'bar'; // 'bar', 'line', 'area'
+  String _chartType = 'bar';
 
   @override
   void initState() {
@@ -43,17 +44,22 @@ class _DashboardScreenState extends State<DashboardScreen>
     super.dispose();
   }
 
+  double _safeDouble(double? value) => value ?? 0.0;
+  List<double> _safeList(List<double>? value) => value ?? [];
+  List _safeTxList(List? value) => value ?? [];
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final filteredTx = widget.state.transactions.where((tx) {
+    final txList = _safeTxList(widget.state.transactions);
+    final filteredTx = txList.where((tx) {
       final query = _searchQuery.toLowerCase();
       return _searchQuery.isEmpty ||
-          tx.title.toLowerCase().contains(query) ||
-          tx.category.toLowerCase().contains(query) ||
-          tx.paymentMethod.toLowerCase().contains(query);
+          (tx.title?.toLowerCase().contains(query) ?? false) ||
+          (tx.category?.toLowerCase().contains(query) ?? false) ||
+          (tx.paymentMethod?.toLowerCase().contains(query) ?? false);
     }).toList();
 
     if (_searchQuery.isNotEmpty) {
@@ -96,9 +102,10 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
           ],
         ),
+        // Gráfico principal - Arriba
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -106,56 +113,57 @@ class _DashboardScreenState extends State<DashboardScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Tendencia mensual',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontSize: 22,
+                      'Tendencia Mensual',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
-                        letterSpacing: -0.5,
+                        fontSize: 20,
                       ),
                     ),
-                    PopupMenuButton<String>(
-                      onSelected: (value) {
-                        setState(() => _chartType = value);
-                      },
-                      itemBuilder: (BuildContext context) => [
-                        PopupMenuItem(
-                          value: 'bar',
-                          child: Row(
-                            children: [
-                              Icon(Icons.bar_chart_rounded, size: 18),
-                              const SizedBox(width: 8),
-                              const Text('Barras'),
-                            ],
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        color: cs.surfaceContainerHighest,
+                      ),
+                      child: PopupMenuButton<String>(
+                        onSelected: (value) {
+                          setState(() => _chartType = value);
+                        },
+                        itemBuilder: (BuildContext context) => [
+                          PopupMenuItem(
+                            value: 'bar',
+                            child: Row(
+                              children: [
+                                Icon(Icons.bar_chart_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                const Text('Barras'),
+                              ],
+                            ),
                           ),
-                        ),
-                        PopupMenuItem(
-                          value: 'line',
-                          child: Row(
-                            children: [
-                              Icon(Icons.trending_up_rounded, size: 18),
-                              const SizedBox(width: 8),
-                              const Text('Líneas'),
-                            ],
+                          PopupMenuItem(
+                            value: 'line',
+                            child: Row(
+                              children: [
+                                Icon(Icons.trending_up_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                const Text('Líneas'),
+                              ],
+                            ),
                           ),
-                        ),
-                        PopupMenuItem(
-                          value: 'area',
-                          child: Row(
-                            children: [
-                              Icon(Icons.area_chart_rounded, size: 18),
-                              const SizedBox(width: 8),
-                              const Text('Área'),
-                            ],
+                          PopupMenuItem(
+                            value: 'area',
+                            child: Row(
+                              children: [
+                                Icon(Icons.area_chart_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                const Text('Área'),
+                              ],
+                            ),
                           ),
+                        ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          child: Icon(Icons.more_vert_rounded, size: 24),
                         ),
-                      ],
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: cs.surfaceContainerHighest,
-                        ),
-                        child: Icon(Icons.more_vert_rounded, size: 20),
                       ),
                     ),
                   ],
@@ -164,24 +172,159 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: isDark
-                        ? cs.surfaceContainerHighest
-                        : cs.surfaceContainerHighest,
+                    color: cs.surfaceContainerHighest,
                     boxShadow: [
                       BoxShadow(
-                        color: cs.shadow.withOpacity(isDark ? 0.3 : 0.08),
-                        blurRadius: 16,
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.all(20),
-                  child: _buildChart(context, cs, widget.state.monthlyTrend, _chartType),
+                  padding: const EdgeInsets.all(16),
+                  child: _buildChart(context, cs, _safeList(widget.state.monthlyTrend), _chartType),
                 ),
               ],
             ),
           ),
         ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        // Balance Total
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    cs.primary,
+                    cs.primary.withOpacity(0.8),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: cs.primary.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tu Balance Actual',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.white.withOpacity(0.85),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '\$${_safeDouble(widget.state.balance).toStringAsFixed(2)}',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 40,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        // Grid de 2x2 - Ingresos y Gastos Mensuales
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Este Mes',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ModernStatCard(
+                        title: 'Ingresos',
+                        amount: _safeDouble(widget.state.monthlyIncome),
+                        icon: Icons.trending_up_rounded,
+                        color: Colors.green,
+                        cs: cs,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ModernStatCard(
+                        title: 'Gastos',
+                        amount: _safeDouble(widget.state.monthlyExpense),
+                        icon: Icons.trending_down_rounded,
+                        color: Colors.red,
+                        cs: cs,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+        // Grid de 2x2 - Totales
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Totales',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _ModernTotalCard(
+                        title: 'Total Ingresos',
+                        amount: _safeDouble(widget.state.totalIncome),
+                        icon: Icons.arrow_downward_rounded,
+                        color: Colors.blue,
+                        cs: cs,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _ModernTotalCard(
+                        title: 'Total Gastos',
+                        amount: _safeDouble(widget.state.totalExpense),
+                        icon: Icons.arrow_upward_rounded,
+                        color: Colors.orange,
+                        cs: cs,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 32)),
       ],
     );
   }
@@ -198,10 +341,10 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildBarChart(BuildContext context, ColorScheme cs, List<double> values) {
-    final chartValues = values.isEmpty ? [1500, 2200, 1800, 2500, 2100, 1900] : values;
-    final maxValue = chartValues.reduce((a, b) => a > b ? a : b);
-    final total = chartValues.fold(0.0, (sum, val) => sum + val);
-    final months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    final chartValues = values.isEmpty 
+        ? [1500.0, 2200.0, 1800.0, 2500.0, 2100.0, 1900.0] 
+        : values.map((v) => (v).toDouble()).toList();
+    final maxValue = chartValues.isEmpty ? 3000.0 : chartValues.reduce((a, b) => a > b ? a : b);
 
     List<BarChartGroupData> barGroups = [];
     for (int i = 0; i < chartValues.length; i++) {
@@ -210,10 +353,10 @@ class _DashboardScreenState extends State<DashboardScreen>
           x: i,
           barRods: [
             BarChartRodData(
-              toY: chartValues[i],
+              toY: (chartValues[i]).toDouble(),
               color: cs.primary,
-              width: 20,
-              borderRadius: const BorderRadius.all(Radius.circular(10)),
+              width: 16,
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
             ),
           ],
         ),
@@ -221,249 +364,360 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     return SizedBox(
-      height: 380,
-      child: Padding(
-        padding: const EdgeInsets.only(right: 16, top: 20, bottom: 16, left: 0),
-        child: BarChart(
-          BarChartData(
-            barGroups: barGroups,
-            borderData: FlBorderData(show: false),
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: maxValue / 5,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: cs.outlineVariant.withOpacity(0.08),
-                  strokeWidth: 1,
-                );
-              },
-            ),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 40,
-                  getTitlesWidget: (value, meta) {
-                    int index = value.toInt();
-                    if (index >= 0 && index < months.length) {
-                      final percentage = (chartValues[index] / total * 100);
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${percentage.toStringAsFixed(1)}%',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: cs.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            months[index],
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: cs.onSurface.withOpacity(0.7),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 45,
-                  getTitlesWidget: (value, meta) {
+      height: 280,
+      child: BarChart(
+        BarChartData(
+          barGroups: barGroups,
+          borderData: FlBorderData(show: false),
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maxValue / 5,
+            getDrawingHorizontalLine: (value) {
+              return FlLine(
+                color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.05),
+                strokeWidth: 1,
+              );
+            },
+          ),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 30,
+                getTitlesWidget: (value, meta) {
+                  final months = ['E', 'F', 'M', 'A', 'M', 'J'];
+                  int index = value.toInt();
+                  if (index >= 0 && index < months.length) {
                     return Text(
-                      '\$${(value / 1000).toStringAsFixed(1)}k',
+                      months[index],
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontSize: 10,
-                        color: cs.onSurface.withOpacity(0.5),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: cs.onSurface.withOpacity(0.6),
                       ),
-                      textAlign: TextAlign.right,
                     );
-                  },
-                ),
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
-            barTouchData: BarTouchData(
-              enabled: true,
-              touchTooltipData: BarTouchTooltipData(
-                getTooltipColor: (_) => cs.surfaceContainerHighest.withOpacity(0.95),
-                tooltipPadding: const EdgeInsets.all(12),
-                tooltipBorderRadius: BorderRadius.circular(12),
-                getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  final percentage = (rod.toY / total * 100);
-                  return BarTooltipItem(
-                    '\$${rod.toY.toStringAsFixed(0)}\n${percentage.toStringAsFixed(1)}%',
-                    TextStyle(color: cs.onSurface, fontWeight: FontWeight.w600, fontSize: 13),
-                    textAlign: TextAlign.center,
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 35,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    '\$${(value / 1000).toStringAsFixed(0)}k',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontSize: 9,
+                      color: cs.onSurface.withOpacity(0.5),
+                    ),
                   );
                 },
               ),
             ),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
+          barTouchData: BarTouchData(enabled: false),
         ),
       ),
     );
   }
 
   Widget _buildLineChart(BuildContext context, ColorScheme cs, List<double> values) {
-    final chartValues = values.isEmpty ? [1500, 2200, 1800, 2500, 2100, 1900] : values;
-    final maxValue = chartValues.reduce((a, b) => a > b ? a : b);
-    final months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+    final chartValues = values.isEmpty 
+        ? [1500.0, 2200.0, 1800.0, 2500.0, 2100.0, 1900.0] 
+        : values.map((v) => (v).toDouble()).toList();
+    final maxValue = chartValues.isEmpty ? 3000.0 : chartValues.reduce((a, b) => a > b ? a : b);
 
     List<FlSpot> spots = [];
     for (int i = 0; i < chartValues.length; i++) {
-      spots.add(FlSpot(i.toDouble(), chartValues[i]));
+      spots.add(FlSpot(i.toDouble(), (chartValues[i]).toDouble()));
     }
 
     return SizedBox(
-      height: 380,
-      child: Padding(
-        padding: const EdgeInsets.only(right: 16, top: 20, bottom: 16, left: 0),
-        child: LineChart(
-          LineChartData(
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: maxValue / 5,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: cs.outlineVariant.withOpacity(0.08),
-                  strokeWidth: 1,
-                );
-              },
-            ),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    int index = value.toInt();
-                    if (index >= 0 && index < months.length) {
-                      return Text(months[index], style: Theme.of(context).textTheme.bodySmall);
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 45,
-                  getTitlesWidget: (value, meta) {
-                    return Text(
-                      '\$${(value / 1000).toStringAsFixed(1)}k',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 10),
-                    );
-                  },
-                ),
-              ),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            ),
-            borderData: FlBorderData(show: false),
-            lineBarsData: [
-              LineChartBarData(
-                spots: spots,
-                isCurved: true,
-                color: cs.primary,
-                barWidth: 3,
-                dotData: FlDotData(show: true, getDotPainter: (spot, percent, barData, index) {
-                  return FlDotCirclePainter(
-                    radius: 4,
-                    color: cs.primary,
-                    strokeWidth: 2,
-                    strokeColor: Colors.white,
-                  );
-                }),
-              ),
-            ],
+      height: 280,
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maxValue / 5,
+            getDrawingHorizontalLine: (value) {
+              return FlLine(
+                color: cs.outlineVariant.withOpacity(0.05),
+                strokeWidth: 1,
+              );
+            },
           ),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 30,
+                getTitlesWidget: (value, meta) {
+                  final months = ['E', 'F', 'M', 'A', 'M', 'J'];
+                  int index = value.toInt();
+                  if (index >= 0 && index < months.length) {
+                    return Text(
+                      months[index],
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: cs.onSurface.withOpacity(0.6),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 35,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    '\$${(value / 1000).toStringAsFixed(0)}k',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
+                  );
+                },
+              ),
+            ),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              color: cs.primary,
+              barWidth: 3,
+              dotData: FlDotData(show: false),
+            ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildAreaChart(BuildContext context, ColorScheme cs, List<double> values) {
-    final chartValues = values.isEmpty ? [1500, 2200, 1800, 2500, 2100, 1900] : values;
-    final maxValue = chartValues.reduce((a, b) => a > b ? a : b);
-    final months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'];
+    final chartValues = values.isEmpty 
+        ? [1500.0, 2200.0, 1800.0, 2500.0, 2100.0, 1900.0] 
+        : values.map((v) => (v).toDouble()).toList();
+    final maxValue = chartValues.isEmpty ? 3000.0 : chartValues.reduce((a, b) => a > b ? a : b);
 
     List<FlSpot> spots = [];
     for (int i = 0; i < chartValues.length; i++) {
-      spots.add(FlSpot(i.toDouble(), chartValues[i]));
+      spots.add(FlSpot(i.toDouble(), (chartValues[i]).toDouble()));
     }
 
     return SizedBox(
-      height: 380,
-      child: Padding(
-        padding: const EdgeInsets.only(right: 16, top: 20, bottom: 16, left: 0),
-        child: LineChart(
-          LineChartData(
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: maxValue / 5,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: cs.outlineVariant.withOpacity(0.08),
-                  strokeWidth: 1,
-                );
-              },
-            ),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    int index = value.toInt();
-                    if (index >= 0 && index < months.length) {
-                      return Text(months[index], style: Theme.of(context).textTheme.bodySmall);
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 45,
-                  getTitlesWidget: (value, meta) {
+      height: 280,
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maxValue / 5,
+            getDrawingHorizontalLine: (value) {
+              return FlLine(
+                color: cs.outlineVariant.withOpacity(0.05),
+                strokeWidth: 1,
+              );
+            },
+          ),
+          titlesData: FlTitlesData(
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 30,
+                getTitlesWidget: (value, meta) {
+                  final months = ['E', 'F', 'M', 'A', 'M', 'J'];
+                  int index = value.toInt();
+                  if (index >= 0 && index < months.length) {
                     return Text(
-                      '\$${(value / 1000).toStringAsFixed(1)}k',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 10),
+                      months[index],
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: cs.onSurface.withOpacity(0.6),
+                      ),
                     );
-                  },
+                  }
+                  return const SizedBox.shrink();
+                },
+              ),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 35,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    '\$${(value / 1000).toStringAsFixed(0)}k',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
+                  );
+                },
+              ),
+            ),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: spots,
+              isCurved: true,
+              color: cs.primary,
+              barWidth: 2,
+              dotData: FlDotData(show: false),
+              belowBarData: BarAreaData(
+                show: true,
+                color: cs.primary.withOpacity(0.1),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModernStatCard extends StatelessWidget {
+  final String title;
+  final double amount;
+  final IconData icon;
+  final Color color;
+  final ColorScheme cs;
+
+  const _ModernStatCard({
+    required this.title,
+    required this.amount,
+    required this.icon,
+    required this.color,
+    required this.cs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: cs.surfaceContainerHighest,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              color: color.withOpacity(0.15),
+            ),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: cs.onSurface.withOpacity(0.6),
+              fontWeight: FontWeight.w500,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '\$${amount.toStringAsFixed(2)}',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModernTotalCard extends StatelessWidget {
+  final String title;
+  final double amount;
+  final IconData icon;
+  final Color color;
+  final ColorScheme cs;
+
+  const _ModernTotalCard({
+    required this.title,
+    required this.amount,
+    required this.icon,
+    required this.color,
+    required this.cs,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: cs.surfaceContainerHighest,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: cs.onSurface.withOpacity(0.6),
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
                 ),
               ),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            ),
-            borderData: FlBorderData(show: false),
-            lineBarsData: [
-              LineChartBarData(
-                spots: spots,
-                isCurved: true,
-                color: cs.primary,
-                barWidth: 2,
-                belowBarData: BarAreaData(
-                  show: true,
-                  color: cs.primary.withOpacity(0.3),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: color.withOpacity(0.15),
                 ),
+                child: Icon(icon, color: color, size: 18),
               ),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          Text(
+            '\$${amount.toStringAsFixed(2)}',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -516,11 +770,10 @@ class _SearchResultsView extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Resultados de búsqueda',
+                  'Resultados',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -540,7 +793,7 @@ class _SearchResultsView extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(32.0),
                 child: Text(
-                  'No hay transacciones que coincidan',
+                  'Sin coincidencias',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ),
@@ -664,11 +917,13 @@ class _SearchBarAppleHeaderState extends State<SearchBarAppleHeader> {
     super.initState();
     _focusNode = FocusNode();
     _focusNode.addListener(_handleFocusChange);
+    widget.controller.addListener(_onControllerChanged);
   }
 
   @override
   void dispose() {
     _focusNode.removeListener(_handleFocusChange);
+    widget.controller.removeListener(_onControllerChanged);
     _focusNode.dispose();
     super.dispose();
   }
@@ -677,6 +932,10 @@ class _SearchBarAppleHeaderState extends State<SearchBarAppleHeader> {
     setState(() {
       _isFocused = _focusNode.hasFocus;
     });
+  }
+
+  void _onControllerChanged() {
+    setState(() {});
   }
 
   @override
@@ -695,15 +954,6 @@ class _SearchBarAppleHeaderState extends State<SearchBarAppleHeader> {
               : Colors.transparent,
           width: 1.5,
         ),
-        boxShadow: _isFocused
-            ? [
-                BoxShadow(
-                  color: cs.primary.withOpacity(0.1),
-                  blurRadius: 12,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : null,
       ),
       child: TextField(
         controller: widget.controller,

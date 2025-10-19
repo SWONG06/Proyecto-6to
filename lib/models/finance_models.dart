@@ -82,4 +82,10 @@ class FinanceAppState {
   get userName => null;
 
   get currentBalance => null;
+
+  double? get totalExpense => null;
+
+  double? get totalIncome => null;
+
+  get balance => null;
 }
