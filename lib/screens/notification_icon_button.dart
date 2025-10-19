@@ -48,9 +48,6 @@ class _NotificationIconButtonState extends State<NotificationIconButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  bool _showPanel = false;
-  final LayerLink _layerLink = LayerLink();
-  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
@@ -67,76 +64,27 @@ class _NotificationIconButtonState extends State<NotificationIconButton>
 
   @override
   void dispose() {
-    _removeOverlay();
     _controller.dispose();
     super.dispose();
-  }
-
-  void _removeOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-
-  void _createOverlay() {
-    final overlay = Overlay.of(context);
-    final renderBox = context.findRenderObject() as RenderBox?;
-    if (renderBox == null) return;
-
-    final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
-    final screenSize = MediaQuery.of(context).size;
-
-    double rightPosition = screenSize.width - offset.dx - size.width;
-    double topPosition = offset.dy + size.height + 8;
-
-    _overlayEntry = OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: _closePanel,
-              child: Container(color: Colors.transparent),
-            ),
-          ),
-          Positioned(
-            right: rightPosition.clamp(8.0, screenSize.width - 348),
-            top: topPosition,
-            child: Material(
-              color: Colors.transparent,
-              child: NotificationPanel(
-                notifications: widget.notifications,
-                onClose: _closePanel,
-                onNotificationTapped: (notification) {
-                  notification.markAsRead();
-                  widget.onNotificationTapped?.call(notification);
-                  setState(() {});
-                },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    overlay.insert(_overlayEntry!);
-  }
-
-  void _closePanel() {
-    setState(() => _showPanel = false);
-    _removeOverlay();
   }
 
   void _onPressed() {
     _controller.forward().then((_) => _controller.reverse());
 
-    setState(() {
-      _showPanel = !_showPanel;
-      if (_showPanel) {
-        _createOverlay();
-      } else {
-        _removeOverlay();
-      }
-    });
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (dialogContext) {
+        return NotificationFullScreenDialog(
+          notifications: widget.notifications,
+          onNotificationTapped: (notification) {
+            notification.markAsRead();
+            widget.onNotificationTapped?.call(notification);
+          },
+        );
+      },
+    );
 
     widget.onPressed();
   }
@@ -145,204 +93,216 @@ class _NotificationIconButtonState extends State<NotificationIconButton>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          ScaleTransition(
-            scale: _scaleAnimation,
-            child: GestureDetector(
-              onTapDown: (_) => _controller.forward(),
-              onTapUp: (_) {
-                _controller.reverse();
-                _onPressed();
-              },
-              onTapCancel: () => _controller.reverse(),
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: cs.surfaceContainerHighest,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ScaleTransition(
+          scale: _scaleAnimation,
+          child: GestureDetector(
+            onTapDown: (_) => _controller.forward(),
+            onTapUp: (_) {
+              _controller.reverse();
+              _onPressed();
+            },
+            onTapCancel: () => _controller.reverse(),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: cs.surfaceContainerHighest,
+              ),
+              child: Icon(
+                Icons.notifications_outlined,
+                size: 20,
+                color: cs.onSurface,
+              ),
+            ),
+          ),
+        ),
+        if (widget.notificationCount > 0)
+          Positioned(
+            top: -6,
+            right: -6,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 5),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.red[600],
+                border: Border.all(
+                  color: Theme.of(context).scaffoldBackgroundColor,
+                  width: 2,
                 ),
-                child: Icon(
-                  Icons.notifications_outlined,
-                  size: 20,
-                  color: cs.onSurface,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.red.withOpacity(0.3),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  widget.notificationCount > 99
+                      ? '99+'
+                      : widget.notificationCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    height: 1.0,
+                  ),
                 ),
               ),
             ),
           ),
-          if (widget.notificationCount > 0)
-            Positioned(
-              top: -6,
-              right: -6,
-              child: Container(
-                constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                padding: const EdgeInsets.symmetric(horizontal: 5),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.red[600],
-                  border: Border.all(
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.red.withOpacity(0.3),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    widget.notificationCount > 99 ? '99+' : widget.notificationCount.toString(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      height: 1.0,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
+      ],
     );
   }
 }
 
-class NotificationPanel extends StatefulWidget {
+class NotificationFullScreenDialog extends StatefulWidget {
   final List<NotificationItem> notifications;
-  final VoidCallback onClose;
   final Function(NotificationItem)? onNotificationTapped;
 
-  const NotificationPanel({
+  const NotificationFullScreenDialog({
     super.key,
     required this.notifications,
-    required this.onClose,
     this.onNotificationTapped,
   });
 
   @override
-  State<NotificationPanel> createState() => _NotificationPanelState();
+  State<NotificationFullScreenDialog> createState() =>
+      _NotificationFullScreenDialogState();
 }
 
-class _NotificationPanelState extends State<NotificationPanel> {
-  int get _unreadCount => widget.notifications.where((n) => !n.isRead).length;
+class _NotificationFullScreenDialogState
+    extends State<NotificationFullScreenDialog> {
+  late List<NotificationItem> _notifications;
+  bool _isSelectionMode = false;
+  final Set<String> _selectedIds = {};
 
-  void _openFullScreen() {
-    showDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierColor: Colors.black.withOpacity(0.5),
-      builder: (dialogContext) {
-        final cs = Theme.of(dialogContext).colorScheme;
-        return Dialog(
-          insetPadding: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Container(
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildDialogHeader(dialogContext, cs),
-                if (widget.notifications.isEmpty)
-                  Expanded(child: _buildEmptyState(dialogContext, cs))
-                else
-                  Expanded(
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: widget.notifications.length,
-                      separatorBuilder: (_, __) => Divider(
-                        height: 1,
-                        thickness: 0.5,
-                        color: cs.outlineVariant.withOpacity(0.2),
-                      ),
-                      itemBuilder: (context, index) {
-                        final notification = widget.notifications[index];
-                        return NotificationItemWidget(
-                          notification: notification,
-                          onTap: () {
-                            widget.onNotificationTapped?.call(notification);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
+  @override
+  void initState() {
+    super.initState();
+    _notifications = List.from(widget.notifications);
+  }
+
+  int get _unreadCount => _notifications.where((n) => !n.isRead).length;
+
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedIds.contains(id)) {
+        _selectedIds.remove(id);
+      } else {
+        _selectedIds.add(id);
+      }
+    });
+  }
+
+  void _selectAll() {
+    setState(() {
+      if (_selectedIds.length == _notifications.length) {
+        _selectedIds.clear();
+      } else {
+        _selectedIds.clear();
+        for (var notif in _notifications) {
+          _selectedIds.add(notif.id);
+        }
+      }
+    });
+  }
+
+  void _deleteSelected() {
+    final count = _selectedIds.length;
+    setState(() {
+      _notifications.removeWhere((n) => _selectedIds.contains(n.id));
+      _selectedIds.clear();
+      _isSelectionMode = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          count == 1
+              ? 'Notificación eliminada'
+              : '$count notificaciones eliminadas',
+        ),
+        duration: const Duration(seconds: 2),
+      ),
     );
+  }
+
+  void _cancelSelection() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedIds.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return _buildPanelView(context, cs);
-  }
 
-  Widget _buildPanelView(BuildContext context, ColorScheme cs) {
-    return Container(
-      width: 340,
-      height: 480,
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: cs.outlineVariant.withOpacity(0.5),
-          width: 1,
+    return Dialog(
+      insetPadding: const EdgeInsets.all(0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(0)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: cs.surface,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          _buildPanelHeader(context, cs),
-          if (widget.notifications.isEmpty)
-            Expanded(child: _buildEmptyState(context, cs))
-          else
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                itemCount: widget.notifications.length,
-                separatorBuilder: (_, __) => Divider(
-                  height: 1,
-                  thickness: 0.5,
-                  color: cs.outlineVariant.withOpacity(0.2),
+        child: Column(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            _buildHeader(context, cs),
+            if (_notifications.isEmpty)
+              Expanded(child: _buildEmptyState(context, cs))
+            else
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  itemCount: _notifications.length,
+                  separatorBuilder: (_, __) => Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: cs.outlineVariant.withOpacity(0.2),
+                  ),
+                  itemBuilder: (context, index) {
+                    final notification = _notifications[index];
+                    final isSelected = _selectedIds.contains(notification.id);
+
+                    return NotificationItemWidget(
+                      notification: notification,
+                      isSelected: isSelected,
+                      isSelectionMode: _isSelectionMode,
+                      onTap: _isSelectionMode
+                          ? () => _toggleSelection(notification.id)
+                          : () {
+                              widget.onNotificationTapped?.call(notification);
+                              setState(() {});
+                            },
+                      onLongPress: () {
+                        setState(() {
+                          _isSelectionMode = true;
+                          _toggleSelection(notification.id);
+                        });
+                      },
+                    );
+                  },
                 ),
-                itemBuilder: (context, index) {
-                  final notification = widget.notifications[index];
-                  return NotificationItemWidget(
-                    notification: notification,
-                    onTap: () {
-                      widget.onNotificationTapped?.call(notification);
-                    },
-                  );
-                },
               ),
-            ),
-        ],
+            if (_isSelectionMode && _selectedIds.isNotEmpty)
+              _buildSelectionBar(context, cs),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildPanelHeader(BuildContext context, ColorScheme cs) {
+  Widget _buildHeader(BuildContext context, ColorScheme cs) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -354,40 +314,66 @@ class _NotificationPanelState extends State<NotificationPanel> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Notificaciones',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
+          if (_isSelectionMode)
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${_selectedIds.length} seleccionada${_selectedIds.length != 1 ? 's' : ''}',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
               ),
-              if (_unreadCount > 0)
+            )
+          else
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  '$_unreadCount sin leer',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: cs.primary,
-                    fontSize: 11,
+                  'Notificaciones',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 24,
                   ),
                 ),
-            ],
-          ),
+                if (_unreadCount > 0)
+                  Text(
+                    '$_unreadCount sin leer',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: cs.primary,
+                      fontSize: 12,
+                    ),
+                  ),
+              ],
+            ),
           Row(
             children: [
+              if (_isSelectionMode)
+                IconButton(
+                  icon: Icon(
+                    _selectedIds.length == _notifications.length
+                        ? Icons.check_circle_rounded
+                        : Icons.radio_button_unchecked_rounded,
+                    size: 28,
+                    color: _selectedIds.length == _notifications.length
+                        ? cs.primary
+                        : cs.outline,
+                  ),
+                  onPressed: _selectAll,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                ),
               IconButton(
-                icon: const Icon(Icons.fullscreen_rounded, size: 20),
-                onPressed: _openFullScreen,
-                tooltip: 'Ver en pantalla completa',
+                icon: const Icon(Icons.close_rounded, size: 24),
+                onPressed: _isSelectionMode
+                    ? _cancelSelection
+                    : () => Navigator.of(context).pop(),
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close_rounded, size: 20),
-                onPressed: widget.onClose,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                 style: IconButton.styleFrom(shape: const CircleBorder()),
               ),
             ],
@@ -397,46 +383,40 @@ class _NotificationPanelState extends State<NotificationPanel> {
     );
   }
 
-  Widget _buildDialogHeader(BuildContext context, ColorScheme cs) {
+  Widget _buildSelectionBar(BuildContext context, ColorScheme cs) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(
+          top: BorderSide(
             color: cs.outlineVariant.withOpacity(0.3),
             width: 1,
           ),
         ),
+        color: cs.primary.withOpacity(0.05),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Notificaciones',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              if (_unreadCount > 0)
-                Text(
-                  '$_unreadCount sin leer',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: cs.primary,
-                    fontSize: 11,
-                  ),
-                ),
-            ],
+          TextButton(
+            onPressed: _cancelSelection,
+            style: TextButton.styleFrom(
+              foregroundColor: isDark ? Colors.white : Colors.black,
+            ),
+            child: const Text('Cancelar'),
           ),
-          IconButton(
-            icon: const Icon(Icons.close_rounded, size: 20),
-            onPressed: () => Navigator.of(context).pop(),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-            style: IconButton.styleFrom(shape: const CircleBorder()),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: _deleteSelected,
+            icon: const Icon(Icons.delete_outline_rounded, size: 18),
+            label: const Text('Eliminar'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isDark ? Colors.black87 : Colors.black,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
           ),
         ],
       ),
@@ -451,23 +431,22 @@ class _NotificationPanelState extends State<NotificationPanel> {
         children: [
           Icon(
             Icons.notifications_none_rounded,
-            size: 56,
+            size: 80,
             color: cs.outline.withOpacity(0.5),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           Text(
             'No hay notificaciones',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: cs.outline,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             'Aquí aparecerán tus actualizaciones',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: cs.outline.withOpacity(0.7),
-              fontSize: 12,
             ),
           ),
         ],
@@ -478,16 +457,23 @@ class _NotificationPanelState extends State<NotificationPanel> {
 
 class NotificationItemWidget extends StatefulWidget {
   final NotificationItem notification;
+  final bool isSelected;
+  final bool isSelectionMode;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   const NotificationItemWidget({
     super.key,
     required this.notification,
+    required this.isSelected,
+    required this.isSelectionMode,
     required this.onTap,
+    required this.onLongPress,
   });
 
   @override
-  State<NotificationItemWidget> createState() => _NotificationItemWidgetState();
+  State<NotificationItemWidget> createState() =>
+      _NotificationItemWidgetState();
 }
 
 class _NotificationItemWidgetState extends State<NotificationItemWidget> {
@@ -502,19 +488,50 @@ class _NotificationItemWidgetState extends State<NotificationItemWidget> {
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
       child: Material(
-        color: isUnread
-            ? cs.primary.withOpacity(0.08)
-            : (_isHovered ? cs.surfaceContainerHighest : Colors.transparent),
+        color: widget.isSelected
+            ? cs.primary.withOpacity(0.15)
+            : isUnread
+                ? cs.primary.withOpacity(0.08)
+                : (_isHovered
+                    ? cs.surfaceContainerHighest
+                    : Colors.transparent),
         child: InkWell(
           onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (widget.isSelectionMode)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12, top: 5),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: widget.isSelected ? cs.primary : cs.outline,
+                          width: 2,
+                        ),
+                        color: widget.isSelected
+                            ? cs.primary.withOpacity(0.2)
+                            : Colors.transparent,
+                      ),
+                      child: widget.isSelected
+                          ? Icon(
+                              Icons.check,
+                              color: cs.primary,
+                              size: 16,
+                            )
+                          : null,
+                    ),
+                  ),
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 50,
+                  height: 50,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: widget.notification.color.withOpacity(0.15),
@@ -522,10 +539,10 @@ class _NotificationItemWidgetState extends State<NotificationItemWidget> {
                   child: Icon(
                     widget.notification.icon,
                     color: widget.notification.color,
-                    size: 20,
+                    size: 24,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -535,19 +552,24 @@ class _NotificationItemWidgetState extends State<NotificationItemWidget> {
                           Expanded(
                             child: Text(
                               widget.notification.title,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: isUnread ? FontWeight.w700 : FontWeight.w600,
-                                fontSize: 13,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                fontWeight: isUnread
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
+                                fontSize: 15,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (isUnread)
+                          if (isUnread && !widget.isSelectionMode)
                             Container(
-                              margin: const EdgeInsets.only(left: 8),
-                              width: 8,
-                              height: 8,
+                              margin: const EdgeInsets.only(left: 12),
+                              width: 10,
+                              height: 10,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: cs.primary,
@@ -555,23 +577,23 @@ class _NotificationItemWidgetState extends State<NotificationItemWidget> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         widget.notification.body,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: cs.onSurface.withOpacity(0.7),
-                          fontSize: 12,
-                          height: 1.3,
+                          fontSize: 14,
+                          height: 1.4,
                         ),
-                        maxLines: 2,
+                        maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 8),
                       Text(
                         widget.notification.timestamp,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: cs.outline.withOpacity(0.8),
-                          fontSize: 11,
+                          color: cs.outline.withOpacity(0.7),
+                          fontSize: 12,
                         ),
                       ),
                     ],

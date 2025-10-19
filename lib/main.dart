@@ -1,3 +1,4 @@
+import 'package:financecloud/screens/notification_icon_button.dart';
 import 'package:financecloud/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -95,6 +96,24 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   final FinanceAppState _state = FinanceAppState.seed();
+  final List<NotificationItem> _notifications = [
+    NotificationItem(
+      id: '1',
+      title: 'Nueva transacción',
+      body: 'Has añadido una transacción exitosamente',
+      timestamp: 'Hace 2 minutos',
+      icon: Icons.check_circle,
+      color: Colors.green,
+    ),
+    NotificationItem(
+      id: '2',
+      title: 'Límite de gastos',
+      body: 'Has alcanzado el 80% de tu presupuesto',
+      timestamp: 'Hace 1 hora',
+      icon: Icons.warning,
+      color: Colors.orange,
+    ),
+  ];
 
   void _navigateToProfile(BuildContext context) {
     Navigator.push(
@@ -119,7 +138,8 @@ class _MainScreenState extends State<MainScreen> {
           state: _state,
           themeMode: widget.themeMode,
           onThemeChanged: widget.onThemeChanged,
-          onNavigateToProfile: () => _navigateToProfile(context), notifications: [],
+          onNavigateToProfile: () => _navigateToProfile(context),
+          notifications: _notifications,
         );
       case 1:
         return AddTransactionScreen(
@@ -153,7 +173,8 @@ class _MainScreenState extends State<MainScreen> {
           state: _state,
           themeMode: widget.themeMode,
           onThemeChanged: widget.onThemeChanged,
-          onNavigateToProfile: () => _navigateToProfile(context), notifications: [],
+          onNavigateToProfile: () => _navigateToProfile(context),
+          notifications: _notifications,
         );
     }
   }
@@ -189,6 +210,20 @@ class _MainScreenState extends State<MainScreen> {
         centerTitle: true,
         elevation: 0,
         actions: [
+          NotificationIconButton(
+            notificationCount:
+                _notifications.where((n) => !n.isRead).length,
+            onPressed: () {},
+            notifications: _notifications,
+            onNotificationTapped: (notification) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(notification.title),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: PopupMenuButton<int>(
