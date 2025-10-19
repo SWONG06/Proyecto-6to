@@ -10,7 +10,9 @@ class AddTransactionScreen extends StatefulWidget {
 
   const AddTransactionScreen({
     super.key,
-    required this.onSaved, required ThemeMode themeMode, required ValueChanged<bool> onThemeChanged,
+    required this.onSaved,
+    required ThemeMode themeMode,
+    required ValueChanged<bool> onThemeChanged,
   });
 
   @override
@@ -23,7 +25,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   TxType _type = TxType.expense;
   String? _snackBarMessage;
 
-  // Clave de API (usa una variable segura en producción)
   static const String _geminiApiKey = 'AIzaSyARluSO62zzBG1MEfDgtPslY8zEohTfXfY';
   late final GeminiService _geminiService = GeminiService(_geminiApiKey);
 
@@ -204,9 +205,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    // Se han eliminado las variables isDark, labelColor y textColor.
-    final labelColor = Colors.black87; // Valor por defecto
-    final textColor = Colors.black; // Valor por defecto
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Colores adaptativos
+    final labelColor = isDark ? Colors.white70 : Colors.black87;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final hintColor = isDark ? Colors.white54 : Colors.black54;
 
     if (_snackBarMessage != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -219,6 +223,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
 
     return Scaffold(
       appBar: AppBar(
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        title: Text(
+          'Nueva Transacción',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: textColor,
+          ),
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -228,7 +243,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               tooltip: 'Escanear Recibo',
             ),
           ),
-          // Se eliminó el AppleThemeToggle
         ],
       ),
       body: SingleChildScrollView(
@@ -237,181 +251,111 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
           key: _formKey,
           child: Column(
             children: [
-              SegmentedButton<TxType>(
-                segments: const [
-                  ButtonSegment(
-                    value: TxType.expense,
-                    icon: Icon(Icons.arrow_downward_rounded),
-                    label: Text(
-                      'Gasto',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+              // Selector de tipo de transacción
+              Container(
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.all(4),
+                child: SegmentedButton<TxType>(
+                  segments: [
+                    ButtonSegment(
+                      value: TxType.expense,
+                      icon: const Icon(Icons.arrow_downward_rounded),
+                      label: Text(
+                        'Gasto',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: _type == TxType.expense ? textColor : hintColor,
+                        ),
                       ),
                     ),
-                  ),
-                  ButtonSegment(
-                    value: TxType.income,
-                    icon: Icon(Icons.arrow_upward_rounded),
-                    label: Text(
-                      'Ingreso',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                    ButtonSegment(
+                      value: TxType.income,
+                      icon: const Icon(Icons.arrow_upward_rounded),
+                      label: Text(
+                        'Ingreso',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: _type == TxType.income ? textColor : hintColor,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-                selected: {_type},
-                onSelectionChanged: (s) => setState(() => _type = s.first),
+                  ],
+                  selected: {_type},
+                  onSelectionChanged: (s) => setState(() => _type = s.first),
+                ),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: 24),
+
+              // Monto
+              _buildAppleTextField(
                 controller: _amountCtrl,
+                label: 'Monto',
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: textColor,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Monto*',
-                  prefixText: r'$ ',
-                  labelStyle: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: labelColor,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
+                prefixText: r'$ ',
+                textColor: textColor,
+                labelColor: labelColor,
+                hintColor: hintColor,
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              const SizedBox(height: 16),
+
+              // Categoría
+              _buildAppleDropdown<String>(
                 value: _selectedCategory,
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Categoría*',
-                  labelStyle: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: labelColor,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-                items: _categories
-                    .map((cat) => DropdownMenuItem(
-                          value: cat,
-                          child: Text(
-                            cat,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: textColor,
-                            ),
-                          ),
-                        ))
-                    .toList(),
+                label: 'Categoría',
+                items: _categories,
                 onChanged: (val) => setState(() => _selectedCategory = val),
+                textColor: textColor,
+                labelColor: labelColor,
+                hintColor: hintColor,
                 validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: 16),
+
+              // Fecha
+              _buildAppleDateField(
                 controller: _dateCtrl,
-                readOnly: true,
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Fecha*',
-                  labelStyle: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: labelColor,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.calendar_today_rounded, size: 26),
-                    onPressed: _pickDate,
-                  ),
-                ),
+                label: 'Fecha',
+                onTap: _pickDate,
+                textColor: textColor,
+                labelColor: labelColor,
                 validator: (_) => _selectedDate == null ? 'Requerido' : null,
               ),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              const SizedBox(height: 16),
+
+              // Método de pago
+              _buildAppleDropdown<String>(
                 value: _selectedMethod,
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Método de pago',
-                  labelStyle: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: labelColor,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
-                items: _paymentMethods
-                    .map((method) => DropdownMenuItem(
-                          value: method,
-                          child: Text(
-                            method,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              color: textColor,
-                            ),
-                          ),
-                        ))
-                    .toList(),
+                label: 'Método de pago',
+                items: _paymentMethods,
                 onChanged: (val) => setState(() => _selectedMethod = val),
+                textColor: textColor,
+                labelColor: labelColor,
+                hintColor: hintColor,
               ),
-              const SizedBox(height: 12),
-              TextFormField(
+              const SizedBox(height: 16),
+
+              // Descripción
+              _buildAppleTextField(
                 controller: _descCtrl,
+                label: 'Descripción',
                 minLines: 2,
                 maxLines: 4,
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w600,
-                  color: textColor,
-                ),
-                decoration: InputDecoration(
-                  labelText: 'Descripción*',
-                  labelStyle: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: labelColor,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 12,
-                  ),
-                ),
+                textColor: textColor,
+                labelColor: labelColor,
+                hintColor: hintColor,
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 28),
+
+              // Botón guardar
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -427,6 +371,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                   style: FilledButton.styleFrom(
                     backgroundColor: cs.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
@@ -436,9 +383,213 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
       ),
     );
   }
+
+  Widget _buildAppleTextField({
+    required TextEditingController controller,
+    required String label,
+    required Color textColor,
+    required Color labelColor,
+    required Color hintColor,
+    TextInputType keyboardType = TextInputType.text,
+    String? prefixText,
+    int? minLines,
+    int? maxLines,
+    String? Function(String?)? validator,
+    double fontSize = 17,
+    FontWeight fontWeight = FontWeight.w600,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      minLines: minLines ?? 1,
+      maxLines: maxLines ?? 1,
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: fontWeight,
+        color: textColor,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixText: prefixText,
+        labelStyle: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: labelColor,
+        ),
+        hintStyle: TextStyle(
+          color: hintColor,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 14,
+          horizontal: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: cs.outlineVariant,
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: cs.outlineVariant,
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: cs.primary,
+            width: 2,
+          ),
+        ),
+        filled: true,
+        fillColor: cs.surfaceContainerHighest,
+      ),
+      validator: validator,
+    );
+  }
+
+  Widget _buildAppleDropdown<T>({
+    required T? value,
+    required String label,
+    required List<T> items,
+    required Function(T?) onChanged,
+    required Color textColor,
+    required Color labelColor,
+    required Color hintColor,
+    String? Function(T?)? validator,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return DropdownButtonFormField<T>(
+      value: value,
+      style: TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: labelColor,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 14,
+          horizontal: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: cs.outlineVariant,
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: cs.outlineVariant,
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: cs.primary,
+            width: 2,
+          ),
+        ),
+        filled: true,
+        fillColor: cs.surfaceContainerHighest,
+      ),
+      items: items
+          .map((item) => DropdownMenuItem(
+                value: item,
+                child: Text(
+                  item.toString(),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: textColor,
+                  ),
+                ),
+              ))
+          .toList(),
+      onChanged: onChanged,
+      validator: validator,
+    );
+  }
+
+  Widget _buildAppleDateField({
+    required TextEditingController controller,
+    required String label,
+    required VoidCallback onTap,
+    required Color textColor,
+    required Color labelColor,
+    String? Function(String?)? validator,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return TextFormField(
+      controller: controller,
+      readOnly: true,
+      onTap: onTap,
+      style: TextStyle(
+        fontSize: 17,
+        fontWeight: FontWeight.w600,
+        color: textColor,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: labelColor,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 14,
+          horizontal: 14,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: cs.outlineVariant,
+            width: 1,
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: cs.outlineVariant,
+            width: 1,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: cs.primary,
+            width: 2,
+          ),
+        ),
+        filled: true,
+        fillColor: cs.surfaceContainerHighest,
+        suffixIcon: IconButton(
+          icon: Icon(
+            Icons.calendar_today_rounded,
+            size: 22,
+            color: cs.primary,
+          ),
+          onPressed: onTap,
+        ),
+      ),
+      validator: validator,
+    );
+  }
 }
 
-/// Botón de ícono estilo Apple con efecto de interacción sutil
+/// Botón de ícono estilo Apple con efecto de interacción mejorado
 class AppleIconButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onPressed;
@@ -516,5 +667,3 @@ class _AppleIconButtonState extends State<AppleIconButton>
     );
   }
 }
-
-// Se eliminó la clase AppleThemeToggle.

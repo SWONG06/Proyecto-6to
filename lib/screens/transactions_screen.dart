@@ -50,6 +50,10 @@ class _TransactionsScreenState extends State<TransactionsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+
     // Filtro de transacciones
     final txs = widget.state.transactions.where((t) {
       final q = _query.toLowerCase();
@@ -65,6 +69,14 @@ class _TransactionsScreenState extends State<TransactionsScreen>
       return matchesQuery && matchesType && matchesCat;
     }).toList();
 
+    // Cálculo de totales
+    double totalExpenses = widget.state.transactions
+        .where((t) => t.type == TxType.expense)
+        .fold(0, (sum, t) => sum + t.amount);
+    double totalIncomes = widget.state.transactions
+        .where((t) => t.type == TxType.income)
+        .fold(0, (sum, t) => sum + t.amount);
+
     // Lista de categorías
     final List<String> categories = [
       'Todas',
@@ -72,58 +84,117 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: AppleSearchBar(
-          controller: _searchController,
-          onSearchChanged: (value) {
-            setState(() => _query = value);
-          },
-        ),
-      ),
+  
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Resumen
+          // Barra de búsqueda
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: Wrap(
-              spacing: 20,
-              runSpacing: 20,
-              children: const [
-                AppleSummaryChip(label: 'Gastos', value: '\$1223.00'),
-                AppleSummaryChip(label: 'Ingresos', value: '\$4500.00'),
-              ],
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: AppleSearchBar(
+              controller: _searchController,
+              onSearchChanged: (value) {
+                setState(() => _query = value);
+              },
             ),
           ),
 
-          // Filtros
+          // Resumen mejorado
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                AppleDropdownButton(
-                  value: _typeFilter,
-                  items: const ['Todos', 'Gastos', 'Ingresos'],
-                  onChanged: (v) => setState(() => _typeFilter = v),
+                Text(
+                  'Resumen',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textColor,
+                  ),
                 ),
-                const SizedBox(width: 12),
-                AppleDropdownButton(
-                  value: _categoryFilter,
-                  items: categories,
-                  onChanged: (v) => setState(() => _categoryFilter = v),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppleSummaryCard(
+                        label: 'Gastos',
+                        value: totalExpenses,
+                        isExpense: true,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppleSummaryCard(
+                        label: 'Ingresos',
+                        value: totalIncomes,
+                        isExpense: false,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+
+          // Filtros mejorados
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: AppleDropdownButton(
+                    value: _typeFilter,
+                    items: const ['Todos', 'Gastos', 'Ingresos'],
+                    onChanged: (v) => setState(() => _typeFilter = v),
+                    label: 'Tipo',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: AppleDropdownButton(
+                    value: _categoryFilter,
+                    items: categories,
+                    onChanged: (v) => setState(() => _categoryFilter = v),
+                    label: 'Categoría',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
 
           // Lista de transacciones
           Expanded(
             child: txs.isEmpty
                 ? Center(
-                    child: Text(
-                      'No hay transacciones',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.receipt_long_rounded,
+                          size: 56,
+                          color: cs.onSurfaceVariant.withOpacity(0.3),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No hay transacciones',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Comienza agregando una transacción',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: cs.onSurfaceVariant.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : ListView.builder(
@@ -141,7 +212,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   }
 }
 
-/// Barra de búsqueda estilo Apple
+/// Barra de búsqueda estilo Apple mejorada
 class AppleSearchBar extends StatefulWidget {
   final TextEditingController controller;
   final ValueChanged<String> onSearchChanged;
@@ -189,31 +260,26 @@ class _AppleSearchBarState extends State<AppleSearchBar>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return AnimatedBuilder(
       animation: _focusController,
       builder: (context, child) {
         return Container(
           decoration: BoxDecoration(
-            color: isDark
-                ? cs.surfaceContainerHigh.withOpacity(
-                    0.6 + (_focusController.value * 0.2))
-                : cs.surfaceContainerHighest.withOpacity(
-                    0.8 + (_focusController.value * 0.2)),
-            borderRadius: BorderRadius.circular(10),
+            color: cs.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isDark
-                  ? cs.primary.withOpacity(_focusController.value * 0.3)
-                  : cs.outlineVariant.withOpacity(_focusController.value * 0.5),
-              width: 0.5,
+              color: cs.outlineVariant.withOpacity(
+                0.3 + (_focusController.value * 0.4),
+              ),
+              width: 1,
             ),
             boxShadow: [
-              if (_focusController.value > 0)
+              if (_focusController.value > 0.1)
                 BoxShadow(
-                  color: cs.primary.withOpacity(_focusController.value * 0.1),
-                  blurRadius: 8 * _focusController.value,
-                  offset: const Offset(0, 2),
+                  color: cs.primary.withOpacity(_focusController.value * 0.15),
+                  blurRadius: 12 * _focusController.value,
+                  offset: const Offset(0, 4),
                 ),
             ],
           ),
@@ -224,7 +290,7 @@ class _AppleSearchBarState extends State<AppleSearchBar>
             decoration: InputDecoration(
               prefixIcon: Icon(
                 Icons.search_rounded,
-                color: cs.onSurfaceVariant.withOpacity(0.6),
+                color: cs.onSurfaceVariant.withOpacity(0.7),
                 size: 20,
               ),
               suffixIcon: widget.controller.text.isNotEmpty
@@ -236,25 +302,26 @@ class _AppleSearchBarState extends State<AppleSearchBar>
                       },
                       child: Icon(
                         Icons.close_rounded,
-                        color: cs.onSurfaceVariant.withOpacity(0.6),
-                        size: 18,
+                        color: cs.onSurfaceVariant.withOpacity(0.7),
+                        size: 20,
                       ),
                     )
                   : null,
               hintText: 'Buscar transacciones...',
               hintStyle: TextStyle(
-                color: cs.onSurfaceVariant.withOpacity(0.5),
-                fontSize: 14,
+                color: cs.onSurfaceVariant.withOpacity(0.6),
+                fontSize: 16,
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 16,
-                vertical: 12,
+                vertical: 14,
               ),
             ),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               color: cs.onSurface,
+              fontWeight: FontWeight.w500,
             ),
             cursorColor: cs.primary,
           ),
@@ -264,17 +331,19 @@ class _AppleSearchBarState extends State<AppleSearchBar>
   }
 }
 
-/// Dropdown estilo Apple - Minimalista
+/// Dropdown estilo Apple mejorado
 class AppleDropdownButton extends StatefulWidget {
   final String value;
   final List<String> items;
   final ValueChanged<String> onChanged;
+  final String? label;
 
   const AppleDropdownButton({
     super.key,
     required this.value,
     required this.items,
     required this.onChanged,
+    this.label,
   });
 
   @override
@@ -300,101 +369,138 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? Colors.white : Colors.black;
+    final textColor = isDark ? Colors.white : Colors.black87;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: cs.outlineVariant.withOpacity(0.5),
-          width: 0.5,
+          width: 1,
         ),
       ),
-      child: DropdownButton<String>(
-        value: _currentValue,
-        items: widget.items
-            .map((item) => DropdownMenuItem(
-                  value: item,
-                  child: Text(
-                    item,
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: textColor),
-                  ),
-                ))
-            .toList(),
-        onChanged: (v) {
-          if (v != null) {
-            setState(() => _currentValue = v);
-            widget.onChanged(v);
-          }
-        },
-        underline: const SizedBox(),
-        isDense: true,
-        isExpanded: false,
-        icon: Icon(
-          Icons.unfold_more_rounded,
-          size: 18,
-          color: cs.onSurfaceVariant,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (widget.label != null) ...[
+            Text(
+              widget.label!,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: cs.onSurfaceVariant.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 6),
+          ],
+          DropdownButton<String>(
+            value: _currentValue,
+            items: widget.items
+                .map((item) => DropdownMenuItem(
+                      value: item,
+                      child: Text(
+                        item,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: textColor,
+                        ),
+                      ),
+                    ))
+                .toList(),
+            onChanged: (v) {
+              if (v != null) {
+                setState(() => _currentValue = v);
+                widget.onChanged(v);
+              }
+            },
+            underline: const SizedBox(),
+            isDense: true,
+            isExpanded: true,
+            icon: Icon(
+              Icons.unfold_more_rounded,
+              size: 20,
+              color: cs.primary.withOpacity(0.7),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Chip de resumen estilo Apple
-class AppleSummaryChip extends StatelessWidget {
+/// Tarjeta de resumen estilo Apple mejorada
+class AppleSummaryCard extends StatelessWidget {
   final String label;
-  final String value;
+  final double value;
+  final bool isExpense;
 
-  const AppleSummaryChip({
+  const AppleSummaryCard({
     super.key,
     required this.label,
     required this.value,
+    required this.isExpense,
   });
+
+  String _formatCurrency(double amount) {
+    return '\$${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}';
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isExpense = label.toLowerCase() == 'gastos';
-    final labelColor = isDark ? Colors.white : Colors.black87;
-    final valueColor = isExpense ? Colors.red[500] : Colors.green[500];
+    final textColor = isDark ? Colors.white : Colors.black87;
+
+    final bgColor = isExpense ? Colors.red[500] : Colors.green[500];
+    final borderColor = isExpense ? Colors.red[400] : Colors.green[400];
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       decoration: BoxDecoration(
-        color: isExpense
-            ? Colors.red[500]?.withOpacity(0.12)
-            : Colors.green[500]?.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(10),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            bgColor!.withOpacity(0.15),
+            bgColor.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: isExpense
-              ? Colors.red[300]?.withOpacity(0.3) ?? Colors.transparent
-              : Colors.green[300]?.withOpacity(0.3) ?? Colors.transparent,
-          width: 0.5,
+          color: borderColor!.withOpacity(0.3),
+          width: 1.5,
         ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-              color: labelColor,
-            ),
+          Row(
+            children: [
+              Icon(
+                isExpense ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                size: 20,
+                color: bgColor,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  color: textColor,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
+          const SizedBox(height: 12),
           Text(
-            value,
+            _formatCurrency(value),
             style: TextStyle(
-              color: valueColor,
+              color: bgColor,
               fontWeight: FontWeight.w800,
-              fontSize: 30,
+              fontSize: 24,
             ),
           ),
         ],
