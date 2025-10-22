@@ -1,3 +1,4 @@
+import 'package:financecloud/screens/MarketNewsScreen.dart';
 import 'package:financecloud/screens/notification_icon_button.dart';
 import 'package:financecloud/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'screens/dashboard_screen.dart';
 import 'screens/add_transaction_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/reports_screen.dart';
-import 'screens/qr_screen.dart';
+import 'screens/market_news_screen.dart';
 import 'screens/profile_screen.dart';
 import 'models/finance_models.dart';
 
@@ -160,7 +161,7 @@ class _MainScreenState extends State<MainScreen> {
           onThemeChanged: widget.onThemeChanged,
         );
       case 99:
-        return const QrScreen();
+        return const MarketNewsScreen();
       case 100:
         return SettingsScreen(
           themeMode: widget.themeMode,
@@ -185,12 +186,12 @@ class _MainScreenState extends State<MainScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final List<Map<String, dynamic>> menuItems = [
-      {'icon': Icons.home_rounded, 'label': 'Dashboard', 'index': 0},
-      {'icon': Icons.add_circle_rounded, 'label': 'Agregar', 'index': 1},
-      {'icon': Icons.receipt_long_rounded, 'label': 'Transacciones', 'index': 2},
-      {'icon': Icons.show_chart_rounded, 'label': 'Reportes', 'index': 3},
-      {'icon': Icons.qr_code_2_rounded, 'label': 'QR', 'index': 99},
-      {'icon': Icons.settings_rounded, 'label': 'Ajustes', 'index': 100},
+      {'icon': Icons.house_rounded, 'label': 'Inicio', 'index': 0},
+      {'icon': Icons.hls_rounded, 'label': 'Agregar', 'index': 1},
+      {'icon': Icons.list_rounded, 'label': 'Movimientos', 'index': 2},
+      {'icon': Icons.trending_up_rounded, 'label': 'Reportes', 'index': 3},
+      {'icon': Icons.newspaper_rounded, 'label': 'Noticias', 'index': 99},
+      {'icon': Icons.grass_rounded, 'label': 'Ajustes', 'index': 100},
     ];
 
     String getCurrentTitle() {
@@ -205,10 +206,16 @@ class _MainScreenState extends State<MainScreen> {
       appBar: AppBar(
         title: Text(
           getCurrentTitle(),
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+          ),
         ),
-        centerTitle: true,
+        centerTitle: false,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent,
         actions: [
           NotificationIconButton(
             notificationCount:
@@ -225,18 +232,23 @@ class _MainScreenState extends State<MainScreen> {
             },
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 16.0),
+            padding: const EdgeInsets.only(right: 12.0),
             child: PopupMenuButton<int>(
-              icon: const Icon(Icons.menu_rounded, size: 28),
+              icon: Icon(
+                Icons.more_horiz_rounded,
+                size: 26,
+                color: cs.onSurface,
+              ),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
               ),
               color: isDark
-                  ? Colors.grey[900]?.withOpacity(0.95)
-                  : Colors.white.withOpacity(0.95),
-              elevation: 8,
+                  ? cs.surface.withOpacity(0.95)
+                  : Colors.white.withOpacity(0.98),
+              elevation: 0,
+              offset: const Offset(0, 10),
               onSelected: (index) {
-                HapticFeedback.lightImpact();
+                HapticFeedback.selectionClick();
                 _navigateToScreen(index);
               },
               itemBuilder: (BuildContext context) {
@@ -244,16 +256,17 @@ class _MainScreenState extends State<MainScreen> {
                   final isActive = _currentIndex == item['index'];
                   return PopupMenuItem<int>(
                     value: item['index'],
+                    height: 44,
                     child: Container(
                       decoration: BoxDecoration(
                         color: isActive
-                            ? cs.primary.withOpacity(0.15)
+                            ? cs.primary.withOpacity(0.08)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 4,
+                        vertical: 2,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -261,17 +274,18 @@ class _MainScreenState extends State<MainScreen> {
                           Icon(
                             item['icon'],
                             color: isActive ? cs.primary : cs.onSurface,
-                            size: 24,
+                            size: 20,
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           Text(
                             item['label'],
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: isActive
-                                  ? FontWeight.w700
-                                  : FontWeight.w600,
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
                               color: isActive ? cs.primary : cs.onSurface,
+                              letterSpacing: -0.3,
                             ),
                           ),
                         ],
