@@ -190,7 +190,7 @@ class _MainScreenState extends State<MainScreen> {
       {'icon': Icons.hls_rounded, 'label': 'Agregar', 'index': 1},
       {'icon': Icons.list_rounded, 'label': 'Movimientos', 'index': 2},
       {'icon': Icons.trending_up_rounded, 'label': 'Reportes', 'index': 3},
-      {'icon': Icons.newspaper_rounded, 'label': 'Noticias', 'index': 99},
+      {'icon': Icons.newspaper_rounded, 'label': 'Noticias Financieras', 'index': 99},
       {'icon': Icons.grass_rounded, 'label': 'Ajustes', 'index': 100},
     ];
 

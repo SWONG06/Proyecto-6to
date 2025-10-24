@@ -94,17 +94,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
 
     return CustomScrollView(
       slivers: [
-        SliverAppBar(
-          pinned: true,
-          elevation: 0,
-          backgroundColor: cs.surface,
-          title: Text(
-            'Noticias Financieras',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
+       
         
         SliverToBoxAdapter(
           child: Padding(
