@@ -59,22 +59,7 @@ class _ReportsScreenState extends State<ReportsScreen>
 
     return CustomScrollView(
       slivers: [
-        SliverAppBar(
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          pinned: true,
-          centerTitle: true,
-          title: Text(
-            'Reportes',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
-          ),
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          foregroundColor: textColor,
-        ),
+    
         // Sección de filtros (NO pegajosa)
         SliverToBoxAdapter(
           child: Container(

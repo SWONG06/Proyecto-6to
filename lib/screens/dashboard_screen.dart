@@ -682,7 +682,7 @@ class _AIFloatingButtonState extends State<_AIFloatingButton>
           ),
           child: Center(
             child: Icon(
-              Icons.auto_awesome_rounded,
+              Icons.smart_toy_rounded,
               size: 28,
               color: Colors.white,
             ),
