@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 class Message {
@@ -26,12 +25,14 @@ class _AIChatScreenState extends State<AIChatScreen> {
   late FocusNode _focusNode;
   final List<Message> _messages = [];
   bool _isLoading = false;
+  late ScrollController _scrollController;
 
   @override
   void initState() {
     super.initState();
     _messageController = TextEditingController();
     _focusNode = FocusNode();
+    _scrollController = ScrollController();
     _addInitialMessage();
   }
 
@@ -39,6 +40,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
   void dispose() {
     _messageController.dispose();
     _focusNode.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -54,10 +56,21 @@ class _AIChatScreenState extends State<AIChatScreen> {
     });
   }
 
+  void _scrollToBottom() {
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
   void _sendMessage(String text) {
     if (text.trim().isEmpty) return;
 
-    // Agregar mensaje del usuario
     setState(() {
       _messages.add(
         Message(
@@ -70,19 +83,23 @@ class _AIChatScreenState extends State<AIChatScreen> {
       _isLoading = true;
     });
 
-    // Simular respuesta de la IA
+    _scrollToBottom();
+
     Future.delayed(const Duration(seconds: 1), () {
-      final response = _generateAIResponse(text);
-      setState(() {
-        _messages.add(
-          Message(
-            text: response,
-            isUser: false,
-            timestamp: DateTime.now(),
-          ),
-        );
-        _isLoading = false;
-      });
+      if (mounted) {
+        final response = _generateAIResponse(text);
+        setState(() {
+          _messages.add(
+            Message(
+              text: response,
+              isUser: false,
+              timestamp: DateTime.now(),
+            ),
+          );
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
     });
   }
 
@@ -103,8 +120,10 @@ class _AIChatScreenState extends State<AIChatScreen> {
       return 'Con tu balance actual, puedes considerar: fondos indexados, fondos mutuos o cuentas de ahorro de alto rendimiento. ¿Cuál te interesa?';
     } else if (message.contains('tarjeta') || message.contains('crédito')) {
       return 'Tienes 3 tarjetas registradas. Tu límite de crédito disponible es de \$5,800. Tasa de utilización: 25%.';
+    } else if (message.contains('ayuda') || message.contains('help')) {
+      return 'Puedo ayudarte con:\n• Análisis de gastos e ingresos\n• Consejos de ahorro\n• Información de inversiones\n• Gestión de tarjetas de crédito\n\n¿Qué te interesa?';
     } else {
-      return 'Entiendo tu pregunta. Para darte una respuesta más precisa sobre \'$userMessage\', necesito más detalles. ¿Puedes ser más específico?';
+      return 'Entiendo tu pregunta. Para darte una respuesta más precisa, necesito más detalles. ¿Puedes ser más específico sobre finanzas?';
     }
   }
 
@@ -126,6 +145,31 @@ class _AIChatScreenState extends State<AIChatScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: Center(
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.blue.withOpacity(0.3),
+                      Colors.purple.withOpacity(0.3),
+                    ],
+                  ),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.blue,
+                  size: 18,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -138,19 +182,18 @@ class _AIChatScreenState extends State<AIChatScreen> {
                     ),
                   )
                 : ListView.builder(
-                    reverse: true,
+                    controller: _scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: _messages.length + (_isLoading ? 1 : 0),
                     itemBuilder: (context, index) {
-                      if (_isLoading && index == 0) {
+                      if (_isLoading && index == _messages.length) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _TypingIndicator(cs: cs),
                         );
                       }
 
-                      final messageIndex = _isLoading ? index - 1 : index;
-                      final message = _messages[_messages.length - 1 - messageIndex];
+                      final message = _messages[index];
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -172,80 +215,84 @@ class _AIChatScreenState extends State<AIChatScreen> {
                 ),
               ),
             ),
-            padding: const EdgeInsets.all(16),
-            child: SafeArea(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        color: cs.surfaceContainerHighest,
-                        border: Border.all(
-                          color: _focusNode.hasFocus
-                              ? cs.primary.withOpacity(0.3)
-                              : Colors.transparent,
-                          width: 1.5,
-                        ),
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 12,
+              bottom: 12 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: cs.surfaceContainerHighest,
+                      border: Border.all(
+                        color: _focusNode.hasFocus
+                            ? cs.primary.withOpacity(0.3)
+                            : Colors.transparent,
+                        width: 1.5,
                       ),
-                      child: TextField(
-                        controller: _messageController,
-                        focusNode: _focusNode,
-                        minLines: 1,
-                        maxLines: 4,
-                        decoration: InputDecoration(
-                          hintText: 'Escribe tu pregunta...',
-                          hintStyle: TextStyle(
-                            color: cs.onSurface.withOpacity(0.5),
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
+                    ),
+                    child: TextField(
+                      controller: _messageController,
+                      focusNode: _focusNode,
+                      minLines: 1,
+                      maxLines: 4,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: InputDecoration(
+                        hintText: 'Escribe tu pregunta...',
+                        hintStyle: TextStyle(
+                          color: cs.onSurface.withOpacity(0.5),
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: _isLoading
-                        ? null
-                        : () => _sendMessage(_messageController.text),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            cs.primary,
-                            cs.primary.withOpacity(0.8),
-                          ],
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: cs.primary.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _isLoading
+                      ? null
+                      : () => _sendMessage(_messageController.text),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          cs.primary,
+                          cs.primary.withOpacity(0.8),
                         ],
                       ),
-                      child: Center(
-                        child: Icon(
-                          _isLoading
-                              ? Icons.hourglass_bottom_rounded
-                              : Icons.send_rounded,
-                          color: Colors.white,
-                          size: 20,
+                      boxShadow: [
+                        BoxShadow(
+                          color: cs.primary.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
                         ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        _isLoading
+                            ? Icons.hourglass_bottom_rounded
+                            : Icons.send_rounded,
+                        color: Colors.white,
+                        size: 20,
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
@@ -381,4 +428,3 @@ class _TypingIndicatorState extends State<_TypingIndicator>
     );
   }
 }
-

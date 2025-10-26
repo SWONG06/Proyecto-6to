@@ -1,3 +1,4 @@
+import 'package:financecloud/screens/AIChat.screen.dart';
 import 'package:financecloud/screens/notification_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -642,13 +643,8 @@ class _AIFloatingButtonState extends State<_AIFloatingButton>
     _controller.forward().then((_) {
       _controller.reverse();
     });
-    // Aquí puedes agregar la acción para abrir el chat con IA
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Abriendo asistente de IA...'),
-        backgroundColor: widget.cs.primary,
-        duration: const Duration(milliseconds: 800),
-      ),
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => const AIChatScreen()),
     );
   }
 
