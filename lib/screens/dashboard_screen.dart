@@ -63,268 +63,286 @@ class _DashboardScreenState extends State<DashboardScreen>
     }).toList();
 
     if (_searchQuery.isNotEmpty) {
-      return _SearchResultsView(
-        cs: cs,
-        filteredTx: filteredTx,
-        searchController: _searchController,
-        onSearchChanged: (value) {
-          setState(() => _searchQuery = value);
-        },
-        onNavigateToProfile: widget.onNavigateToProfile,
+      return Stack(
+        children: [
+          _SearchResultsView(
+            cs: cs,
+            filteredTx: filteredTx,
+            searchController: _searchController,
+            onSearchChanged: (value) {
+              setState(() => _searchQuery = value);
+            },
+            onNavigateToProfile: widget.onNavigateToProfile,
+          ),
+          Positioned(
+            bottom: 24,
+            right: 24,
+            child: _AIFloatingButton(cs: cs),
+          ),
+        ],
       );
     }
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          elevation: 0,
-          backgroundColor: isDark
-              ? cs.surface.withOpacity(0.95)
-              : Colors.white.withOpacity(0.95),
-          title: SizedBox(
-            height: 40,
-            child: SearchBarAppleHeader(
-              controller: _searchController,
-              onSearchChanged: (value) {
-                setState(() => _searchQuery = value);
-              },
-            ),
-          ),
-          actions: [
-            if (widget.onNavigateToProfile != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 16.0),
-                child: AppleIconButton(
-                  icon: Icons.person,
-                  onPressed: widget.onNavigateToProfile ?? () {},
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              elevation: 0,
+              backgroundColor: isDark
+                  ? cs.surface.withOpacity(0.95)
+                  : Colors.white.withOpacity(0.95),
+              title: SizedBox(
+                height: 40,
+                child: SearchBarAppleHeader(
+                  controller: _searchController,
+                  onSearchChanged: (value) {
+                    setState(() => _searchQuery = value);
+                  },
                 ),
               ),
-          ],
-        ),
-        // Balance Total - PRIMERO
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    cs.primary,
-                    cs.primary.withOpacity(0.8),
-                  ],
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: cs.primary.withOpacity(0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Tu Balance Actual',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withOpacity(0.85),
-                      fontWeight: FontWeight.w500,
-                      fontSize: 14,
+              actions: [
+                if (widget.onNavigateToProfile != null)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16.0),
+                    child: AppleIconButton(
+                      icon: Icons.person,
+                      onPressed: widget.onNavigateToProfile ?? () {},
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '\$${_safeDouble(widget.state.balance).toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 40,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
-        // Grid de 2x2 - Ingresos y Gastos Mensuales
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Este Mes',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ModernStatCard(
-                        title: 'Ingresos',
-                        amount: _safeDouble(widget.state.monthlyIncome),
-                        icon: Icons.trending_up_rounded,
-                        color: Colors.green,
-                        cs: cs,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _ModernStatCard(
-                        title: 'Gastos',
-                        amount: _safeDouble(widget.state.monthlyExpense),
-                        icon: Icons.trending_down_rounded,
-                        color: Colors.red,
-                        cs: cs,
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
-        // Grid de 2x2 - Totales
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Totales',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ModernTotalCard(
-                        title: 'Total Ingresos',
-                        amount: _safeDouble(widget.state.totalIncome),
-                        icon: Icons.arrow_downward_rounded,
-                        color: Colors.blue,
-                        cs: cs,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _ModernTotalCard(
-                        title: 'Total Gastos',
-                        amount: _safeDouble(widget.state.totalExpense),
-                        icon: Icons.arrow_upward_rounded,
-                        color: Colors.orange,
-                        cs: cs,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
-        // Gráfico principal - AL FINAL
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Tendencia Mensual',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: cs.surfaceContainerHighest,
-                      ),
-                      child: PopupMenuButton<String>(
-                        onSelected: (value) {
-                          setState(() => _chartType = value);
-                        },
-                        itemBuilder: (BuildContext context) => [
-                          PopupMenuItem(
-                            value: 'bar',
-                            child: Row(
-                              children: [
-                                Icon(Icons.bar_chart_rounded, size: 18),
-                                const SizedBox(width: 8),
-                                const Text('Barras'),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'line',
-                            child: Row(
-                              children: [
-                                Icon(Icons.trending_up_rounded, size: 18),
-                                const SizedBox(width: 8),
-                                const Text('Líneas'),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: 'area',
-                            child: Row(
-                              children: [
-                                Icon(Icons.area_chart_rounded, size: 18),
-                                const SizedBox(width: 8),
-                                const Text('Área'),
-                              ],
-                            ),
-                          ),
-                        ],
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          child: Icon(Icons.more_vert_rounded, size: 24),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Container(
+            // Balance Total - PRIMERO
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
-                    color: cs.surfaceContainerHighest,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        cs.primary,
+                        cs.primary.withOpacity(0.8),
+                      ],
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: cs.primary.withOpacity(0.3),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.all(16),
-                  child: _buildChart(context, cs, _safeList(widget.state.monthlyTrend), _chartType),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tu Balance Actual',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withOpacity(0.85),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        '\$${_safeDouble(widget.state.balance).toStringAsFixed(2)}',
+                        style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 40,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ],
+              ),
             ),
-          ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            // Grid de 2x2 - Ingresos y Gastos Mensuales
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Este Mes',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ModernStatCard(
+                            title: 'Ingresos',
+                            amount: _safeDouble(widget.state.monthlyIncome),
+                            icon: Icons.trending_up_rounded,
+                            color: Colors.green,
+                            cs: cs,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _ModernStatCard(
+                            title: 'Gastos',
+                            amount: _safeDouble(widget.state.monthlyExpense),
+                            icon: Icons.trending_down_rounded,
+                            color: Colors.red,
+                            cs: cs,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            // Grid de 2x2 - Totales
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Totales',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _ModernTotalCard(
+                            title: 'Total Ingresos',
+                            amount: _safeDouble(widget.state.totalIncome),
+                            icon: Icons.arrow_downward_rounded,
+                            color: Colors.blue,
+                            cs: cs,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _ModernTotalCard(
+                            title: 'Total Gastos',
+                            amount: _safeDouble(widget.state.totalExpense),
+                            icon: Icons.arrow_upward_rounded,
+                            color: Colors.orange,
+                            cs: cs,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            // Gráfico principal - AL FINAL
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Tendencia Mensual',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 20,
+                          ),
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            color: cs.surfaceContainerHighest,
+                          ),
+                          child: PopupMenuButton<String>(
+                            onSelected: (value) {
+                              setState(() => _chartType = value);
+                            },
+                            itemBuilder: (BuildContext context) => [
+                              PopupMenuItem(
+                                value: 'bar',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.bar_chart_rounded, size: 18),
+                                    const SizedBox(width: 8),
+                                    const Text('Barras'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'line',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.trending_up_rounded, size: 18),
+                                    const SizedBox(width: 8),
+                                    const Text('Líneas'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem(
+                                value: 'area',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.area_chart_rounded, size: 18),
+                                    const SizedBox(width: 8),
+                                    const Text('Área'),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              child: Icon(Icons.more_vert_rounded, size: 24),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        color: cs.surfaceContainerHighest,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(16),
+                      child: _buildChart(context, cs, _safeList(widget.state.monthlyTrend), _chartType),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 16)),
+        Positioned(
+          bottom: 24,
+          right: 24,
+          child: _AIFloatingButton(cs: cs),
+        ),
       ],
     );
   }
@@ -581,6 +599,98 @@ class _DashboardScreenState extends State<DashboardScreen>
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AIFloatingButton extends StatefulWidget {
+  final ColorScheme cs;
+
+  const _AIFloatingButton({required this.cs});
+
+  @override
+  State<_AIFloatingButton> createState() => _AIFloatingButtonState();
+}
+
+class _AIFloatingButtonState extends State<_AIFloatingButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onPressed() {
+    _controller.forward().then((_) {
+      _controller.reverse();
+    });
+    // Aquí puedes agregar la acción para abrir el chat con IA
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('Abriendo asistente de IA...'),
+        backgroundColor: widget.cs.primary,
+        duration: const Duration(milliseconds: 800),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: GestureDetector(
+        onTapDown: (_) => _controller.forward(),
+        onTapUp: (_) {
+          _controller.reverse();
+          _onPressed();
+        },
+        onTapCancel: () => _controller.reverse(),
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                widget.cs.primary,
+                widget.cs.primary.withOpacity(0.8),
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: widget.cs.primary.withOpacity(0.4),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(
+              Icons.auto_awesome_rounded,
+              size: 28,
+              color: Colors.white,
+            ),
+          ),
         ),
       ),
     );

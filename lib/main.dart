@@ -9,7 +9,6 @@ import 'screens/dashboard_screen.dart';
 import 'screens/add_transaction_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/reports_screen.dart';
-import 'screens/market_news_screen.dart';
 import 'screens/profile_screen.dart';
 import 'models/finance_models.dart';
 

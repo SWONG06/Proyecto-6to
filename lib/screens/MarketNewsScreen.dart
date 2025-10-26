@@ -18,6 +18,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
     NewsItem(
       title: 'Banco Central sube tasa de interés al 4.5%',
       description: 'El Banco Central anunció una subida de 50 puntos base en la tasa de política monetaria...',
+      fullContent: 'El Banco Central anunció una subida de 50 puntos base en la tasa de política monetaria, llevándola del 4.0% al 4.5%. Esta decisión fue tomada en respuesta a las presiones inflacionarias observadas en los últimos meses. Los analistas esperaban esta medida para controlar la inflación y mantener la estabilidad económica. Se espera que esta decisión impacte en las tasas de los créditos y depósitos bancarios en las próximas semanas.',
       category: 'Bancos',
       time: '2 horas',
       icon: Icons.trending_up,
@@ -26,6 +27,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
     NewsItem(
       title: 'S&P 500 alcanza nuevo máximo histórico',
       description: 'Los índices bursátiles estadounidenses continúan su racha alcista impulsados por ganancias tecnológicas...',
+      fullContent: 'Los índices bursátiles estadounidenses continúan su racha alcista impulsados por ganancias tecnológicas. El S&P 500 alcanzó un nuevo máximo histórico, superando las expectativas de los analistas. Las principales empresas de tecnología como Apple, Microsoft y Google han mostrado resultados excepcionales que han impulsado el mercado. Los inversores mantienen una visión optimista sobre el desempeño económico en los próximos trimestres.',
       category: 'Inversiones',
       time: '3 horas',
       icon: Icons.show_chart,
@@ -34,6 +36,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
     NewsItem(
       title: 'Bitcoin supera los \$45,000',
       description: 'La criptomoneda más popular del mundo alcanza nuevos máximos en medio de una recuperación del mercado...',
+      fullContent: 'La criptomoneda más popular del mundo alcanza nuevos máximos en medio de una recuperación del mercado cripto. Bitcoin ha superado la barrera psicológica de los \$45,000, impulsado por noticias positivas sobre adopción institucional. Se espera que este rally continúe en las próximas semanas si se mantiene el sentimiento positivo en el mercado. Los analistas proyectan que podría alcanzar los \$50,000 antes de fin de año.',
       category: 'Criptos',
       time: '4 horas',
       icon: Icons.currency_bitcoin,
@@ -42,6 +45,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
     NewsItem(
       title: 'Nuevas regulaciones fintech en la UE',
       description: 'La Unión Europea implementa nuevas medidas de control para empresas de tecnología financiera...',
+      fullContent: 'La Unión Europea implementa nuevas medidas de control para empresas de tecnología financiera. Estas regulaciones buscan proteger a los consumidores y garantizar la estabilidad del sistema financiero. Las empresas fintech deberán cumplir con requisitos más estrictos de capital y transparencia. Se estima que estas medidas entrarán en vigor en el próximo trimestre.',
       category: 'Bancos',
       time: '5 horas',
       icon: Icons.security,
@@ -50,6 +54,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
     NewsItem(
       title: 'Ethereum supera \$2,500 en bull run',
       description: 'La segunda criptomoneda más grande por capitalización de mercado continúa su ascenso...',
+      fullContent: 'La segunda criptomoneda más grande por capitalización de mercado continúa su ascenso impulsada por la actividad en DeFi. Ethereum ha superado los \$2,500 gracias al optimismo sobre las mejoras de escalabilidad. La red ha procesado un volumen récord de transacciones en las últimas semanas. Los desarrolladores continúan trabajando en mejoras de rendimiento.',
       category: 'Criptos',
       time: '6 horas',
       icon: Icons.currency_bitcoin,
@@ -58,6 +63,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
     NewsItem(
       title: 'Mercado de oro cae 2.3% esta semana',
       description: 'El precio del oro retrocede debido al fortalecimiento del dólar en los mercados internacionales...',
+      fullContent: 'El precio del oro retrocede debido al fortalecimiento del dólar en los mercados internacionales. El metal precioso cae 2.3% esta semana afectado por la solidez de la divisa estadounidense. Los inversores han reducido sus posiciones defensivas ante el panorama económico más positivo. Se espera que el oro continúe bajo presión si el dólar mantiene su fortaleza.',
       category: 'Mercado',
       time: '7 horas',
       icon: Icons.monetization_on,
@@ -66,6 +72,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
     NewsItem(
       title: 'Tech stocks en caída, preocupación por tasas',
       description: 'Los inversores reevalúan posiciones en el sector tecnológico ante expectativas de tasas más altas...',
+      fullContent: 'Los inversores reevalúan posiciones en el sector tecnológico ante expectativas de tasas más altas. Las acciones de tecnología experimenta presión vendedora debido a preocupaciones sobre rentabilidad futura. Un aumento en las tasas de interés afectaría la valoración de estas empresas de alto crecimiento. Los analistas recomiendan cautela pero mantienen una visión de largo plazo positiva.',
       category: 'Inversiones',
       time: '8 horas',
       icon: Icons.trending_down,
@@ -74,6 +81,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
     NewsItem(
       title: 'Banco XYZ lanza nueva app de inversión',
       description: 'La institución financiera ofrece a sus clientes una plataforma mejorada para invertir en bolsa...',
+      fullContent: 'La institución financiera ofrece a sus clientes una plataforma mejorada para invertir en bolsa. La nueva aplicación incluye herramientas avanzadas de análisis, alertas personalizadas y acceso a múltiples mercados. Los clientes podrán operaren tiempo real con comisiones reducidas. La app está disponible en iOS y Android desde hoy.',
       category: 'Bancos',
       time: '9 horas',
       icon: Icons.phone_android,
@@ -94,8 +102,6 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
 
     return CustomScrollView(
       slivers: [
-       
-        
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -157,6 +163,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
               (context, index) => _NewsCard(
                 news: filteredNews[index],
                 cs: cs,
+                onTap: () => _navigateToDetail(context, filteredNews[index]),
               ),
               childCount: filteredNews.length,
             ),
@@ -166,15 +173,25 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
       ],
     );
   }
+
+  void _navigateToDetail(BuildContext context, NewsItem news) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => NewsDetailScreen(news: news),
+      ),
+    );
+  }
 }
 
 class _NewsCard extends StatelessWidget {
   final NewsItem news;
   final ColorScheme cs;
+  final VoidCallback onTap;
 
   const _NewsCard({
     required this.news,
     required this.cs,
+    required this.onTap,
   });
 
   @override
@@ -184,9 +201,7 @@ class _NewsCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            // Aquí puedes navegar a detalle de noticia
-          },
+          onTap: onTap,
           borderRadius: BorderRadius.circular(16),
           child: Container(
             decoration: BoxDecoration(
@@ -289,9 +304,114 @@ class _NewsCard extends StatelessWidget {
   }
 }
 
+class NewsDetailScreen extends StatelessWidget {
+  final NewsItem news;
+
+  const NewsDetailScreen({super.key, required this.news});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Detalle de Noticia'),
+        backgroundColor: cs.surfaceContainerHighest,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: news.color.withOpacity(0.15),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    news.icon,
+                    size: 16,
+                    color: news.color,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    news.category,
+                    style: TextStyle(
+                      color: news.color,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              news.title,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              news.time,
+              style: TextStyle(
+                color: cs.onSurface.withOpacity(0.5),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              news.fullContent,
+              style: TextStyle(
+                fontSize: 16,
+                color: cs.onSurface.withOpacity(0.8),
+                height: 1.6,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: cs.surfaceContainerHighest,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info,
+                    color: cs.primary,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Categoría: ${news.category}',
+                      style: TextStyle(
+                        color: cs.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class NewsItem {
   final String title;
   final String description;
+  final String fullContent;
   final String category;
   final String time;
   final IconData icon;
@@ -300,6 +420,7 @@ class NewsItem {
   NewsItem({
     required this.title,
     required this.description,
+    required this.fullContent,
     required this.category,
     required this.time,
     required this.icon,
