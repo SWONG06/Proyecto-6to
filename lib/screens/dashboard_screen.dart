@@ -1,4 +1,4 @@
-import 'package:financecloud/screens/AIChat.screen.dart';
+import 'package:financecloud/screens/ai_chat_screen.dart';
 import 'package:financecloud/screens/notification_icon_button.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';

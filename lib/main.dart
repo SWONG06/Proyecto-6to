@@ -1,18 +1,24 @@
-import 'package:financecloud/screens/MarketNewsScreen.dart';
-import 'package:financecloud/screens/notification_icon_button.dart';
-import 'package:financecloud/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // 👈 Importante
 import 'utils/theme.dart';
+import 'models/finance_models.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/add_transaction_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/reports_screen.dart';
 import 'screens/profile_screen.dart';
-import 'models/finance_models.dart';
+import 'screens/settings_screen.dart';
+import 'screens/market_news_screen.dart';
+import 'screens/notification_icon_button.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ Cargar variables .env antes de correr la app
+  await dotenv.load(fileName: ".env");
+
   runApp(const FinanceCloudApp());
 }
 
@@ -56,7 +62,7 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
       theme: buildTheme().copyWith(useMaterial3: true),
       darkTheme: buildDarkTheme().copyWith(useMaterial3: true),
       themeMode: _themeMode,
-      localizationsDelegates: [
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
@@ -190,7 +196,7 @@ class _MainScreenState extends State<MainScreen> {
       {'icon': Icons.list_rounded, 'label': 'Movimientos', 'index': 2},
       {'icon': Icons.trending_up_rounded, 'label': 'Reportes', 'index': 3},
       {'icon': Icons.newspaper_rounded, 'label': 'Noticias Financieras', 'index': 99},
-      {'icon': Icons.grass_rounded, 'label': 'Ajustes', 'index': 100},
+      {'icon': Icons.settings_rounded, 'label': 'Ajustes', 'index': 100},
     ];
 
     String getCurrentTitle() {

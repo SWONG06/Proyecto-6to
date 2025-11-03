@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../models/finance_models.dart';
 import '../utils/format.dart';
-import '../services/gemini_service.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final void Function(FinanceTransaction) onSaved;
@@ -24,9 +21,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   final _formKey = GlobalKey<FormState>();
   TxType _type = TxType.expense;
   String? _snackBarMessage;
-
-  static const String _geminiApiKey = 'AIzaSyARluSO62zzBG1MEfDgtPslY8zEohTfXfY';
-  late final GeminiService _geminiService = GeminiService(_geminiApiKey);
 
   final _amountCtrl = TextEditingController();
   final _dateCtrl = TextEditingController();
@@ -56,11 +50,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   ];
 
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   void dispose() {
     _amountCtrl.dispose();
     _dateCtrl.dispose();
@@ -83,99 +72,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
         _selectedDate = res;
         _dateCtrl.text = dateShort(res);
       });
-    }
-  }
-
-  Future<void> _scanReceipt() async {
-    final status = await Permission.camera.request();
-    if (!mounted) return;
-
-    if (!status.isGranted) {
-      if (status.isPermanentlyDenied) {
-        if (!mounted) return;
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Permiso requerido'),
-            content: const Text(
-              'El permiso de cámara es necesario para escanear recibos. '
-              'Por favor, habilítalo en la configuración de la app.',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancelar'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  openAppSettings();
-                },
-                child: const Text('Abrir configuración'),
-              ),
-            ],
-          ),
-        );
-      } else {
-        setState(() => _snackBarMessage = 'Permiso de cámara denegado');
-      }
-      return;
-    }
-
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.camera);
-    if (!mounted || image == null) return;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('Analizando recibo...'),
-          ],
-        ),
-      ),
-    );
-
-    try {
-      final data = await _geminiService.analyzeReceipt(image);
-      if (!mounted) return;
-      Navigator.of(context).pop();
-
-      if (data != null) {
-        setState(() {
-          if (data['amount'] != null) {
-            _amountCtrl.text = data['amount'].toString();
-          }
-          if (data['date'] != null && data['date'].isNotEmpty) {
-            try {
-              _selectedDate = DateTime.parse(data['date']);
-              _dateCtrl.text = dateShort(_selectedDate!);
-            } catch (_) {}
-          }
-          if (data['description'] != null && data['description'].isNotEmpty) {
-            _descCtrl.text = data['description'];
-          }
-          if (data['category'] != null &&
-              _categories.contains(data['category'])) {
-            _selectedCategory = data['category'];
-          }
-          if (data['paymentMethod'] != null &&
-              _paymentMethods.contains(data['paymentMethod'])) {
-            _selectedMethod = data['paymentMethod'];
-          }
-          _snackBarMessage = 'Datos extraídos del recibo';
-        });
-      } else {
-        setState(() => _snackBarMessage = 'No se pudieron extraer datos del recibo');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      setState(() => _snackBarMessage = 'Error: $e');
     }
   }
 
@@ -207,7 +103,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Colores adaptativos
     final labelColor = isDark ? Colors.white70 : Colors.black87;
     final textColor = isDark ? Colors.white : Colors.black87;
     final hintColor = isDark ? Colors.white54 : Colors.black54;
@@ -234,16 +129,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
             color: textColor,
           ),
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: AppleIconButton(
-              icon: Icons.camera_alt_rounded,
-              onPressed: _scanReceipt,
-              tooltip: 'Escanear Recibo',
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
@@ -251,7 +136,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
           key: _formKey,
           child: Column(
             children: [
-              // Selector de tipo de transacción
+              // 🔹 Tipo de transacción
               Container(
                 decoration: BoxDecoration(
                   color: cs.surfaceContainerHighest,
@@ -291,22 +176,24 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               ),
               const SizedBox(height: 24),
 
-              // Monto
+              // 🔹 Monto
               _buildAppleTextField(
                 controller: _amountCtrl,
                 label: 'Monto',
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 prefixText: r'$ ',
                 textColor: textColor,
                 labelColor: labelColor,
                 hintColor: hintColor,
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Requerido' : null,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
               const SizedBox(height: 16),
 
-              // Categoría
+              // 🔹 Categoría
               _buildAppleDropdown<String>(
                 value: _selectedCategory,
                 label: 'Categoría',
@@ -315,22 +202,24 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                 textColor: textColor,
                 labelColor: labelColor,
                 hintColor: hintColor,
-                validator: (v) => (v == null || v.isEmpty) ? 'Requerido' : null,
+                validator: (v) =>
+                    (v == null || v.isEmpty) ? 'Requerido' : null,
               ),
               const SizedBox(height: 16),
 
-              // Fecha
+              // 🔹 Fecha
               _buildAppleDateField(
                 controller: _dateCtrl,
                 label: 'Fecha',
                 onTap: _pickDate,
                 textColor: textColor,
                 labelColor: labelColor,
-                validator: (_) => _selectedDate == null ? 'Requerido' : null,
+                validator: (_) =>
+                    _selectedDate == null ? 'Requerido' : null,
               ),
               const SizedBox(height: 16),
 
-              // Método de pago
+              // 🔹 Método de pago
               _buildAppleDropdown<String>(
                 value: _selectedMethod,
                 label: 'Método de pago',
@@ -342,7 +231,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
               ),
               const SizedBox(height: 16),
 
-              // Descripción
+              // 🔹 Descripción
               _buildAppleTextField(
                 controller: _descCtrl,
                 label: 'Descripción',
@@ -351,11 +240,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                 textColor: textColor,
                 labelColor: labelColor,
                 hintColor: hintColor,
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Requerido' : null,
               ),
               const SizedBox(height: 28),
 
-              // Botón guardar
+              // 🔹 Botón Guardar
               SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -384,6 +274,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     );
   }
 
+  // 🔸 TextField estilo Apple
   Widget _buildAppleTextField({
     required TextEditingController controller,
     required String label,
@@ -417,33 +308,20 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
           fontWeight: FontWeight.w500,
           color: labelColor,
         ),
-        hintStyle: TextStyle(
-          color: hintColor,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 14,
-          horizontal: 14,
-        ),
+        hintStyle: TextStyle(color: hintColor),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: cs.outlineVariant,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: cs.outlineVariant, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: cs.outlineVariant,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: cs.outlineVariant, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: cs.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: cs.primary, width: 2),
         ),
         filled: true,
         fillColor: cs.surfaceContainerHighest,
@@ -452,6 +330,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     );
   }
 
+  // 🔸 Dropdown estilo Apple
   Widget _buildAppleDropdown<T>({
     required T? value,
     required String label,
@@ -477,52 +356,44 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
           fontWeight: FontWeight.w500,
           color: labelColor,
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 14,
-          horizontal: 14,
-        ),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: cs.outlineVariant,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: cs.outlineVariant, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: cs.outlineVariant,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: cs.outlineVariant, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: cs.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: cs.primary, width: 2),
         ),
         filled: true,
         fillColor: cs.surfaceContainerHighest,
       ),
       items: items
-          .map((item) => DropdownMenuItem(
-                value: item,
-                child: Text(
-                  item.toString(),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: textColor,
-                  ),
+          .map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Text(
+                item.toString(),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: textColor,
                 ),
-              ))
+              ),
+            ),
+          )
           .toList(),
       onChanged: onChanged,
       validator: validator,
     );
   }
 
+  // 🔸 Campo de fecha estilo Apple
   Widget _buildAppleDateField({
     required TextEditingController controller,
     required String label,
@@ -548,122 +419,28 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
           fontWeight: FontWeight.w500,
           color: labelColor,
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 14,
-          horizontal: 14,
-        ),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: cs.outlineVariant,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: cs.outlineVariant, width: 1),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: cs.outlineVariant,
-            width: 1,
-          ),
+          borderSide: BorderSide(color: cs.outlineVariant, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: cs.primary,
-            width: 2,
-          ),
+          borderSide: BorderSide(color: cs.primary, width: 2),
         ),
         filled: true,
         fillColor: cs.surfaceContainerHighest,
         suffixIcon: IconButton(
-          icon: Icon(
-            Icons.calendar_today_rounded,
-            size: 22,
-            color: cs.primary,
-          ),
+          icon: Icon(Icons.calendar_today_rounded, size: 22, color: cs.primary),
           onPressed: onTap,
         ),
       ),
       validator: validator,
-    );
-  }
-}
-
-/// Botón de ícono estilo Apple con efecto de interacción mejorado
-class AppleIconButton extends StatefulWidget {
-  final IconData icon;
-  final VoidCallback onPressed;
-  final Color? color;
-  final double size;
-  final String? tooltip;
-
-  const AppleIconButton({
-    super.key,
-    required this.icon,
-    required this.onPressed,
-    this.color,
-    this.size = 24,
-    this.tooltip,
-  });
-
-  @override
-  State<AppleIconButton> createState() => _AppleIconButtonState();
-}
-
-class _AppleIconButtonState extends State<AppleIconButton>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 150),
-      vsync: this,
-    );
-
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.85).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
-    return Tooltip(
-      message: widget.tooltip ?? '',
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: GestureDetector(
-          onTapDown: (_) => _controller.forward(),
-          onTapUp: (_) {
-            _controller.reverse();
-            widget.onPressed();
-          },
-          onTapCancel: () => _controller.reverse(),
-          child: Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: cs.surfaceContainerHighest,
-            ),
-            child: Icon(
-              widget.icon,
-              size: widget.size,
-              color: widget.color ?? cs.onSurface,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
