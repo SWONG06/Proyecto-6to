@@ -85,24 +85,40 @@ class _TransactionsScreenState extends State<TransactionsScreen>
     ];
 
     return Scaffold(
-  
+      backgroundColor: cs.background,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Barra de búsqueda
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: AppleSearchBar(
-              controller: _searchController,
-              onSearchChanged: (value) {
-                setState(() => _query = value);
-              },
+          // Header mejorado
+          Container(
+            color: cs.surface,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Mis Transacciones',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: textColor,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Barra de búsqueda mejorada
+                AppleSearchBar(
+                  controller: _searchController,
+                  onSearchChanged: (value) {
+                    setState(() => _query = value);
+                  },
+                ),
+              ],
             ),
           ),
 
           // Resumen mejorado
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -110,8 +126,9 @@ class _TransactionsScreenState extends State<TransactionsScreen>
                   'Resumen',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w800,
                     color: textColor,
+                    letterSpacing: 0.3,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -137,7 +154,6 @@ class _TransactionsScreenState extends State<TransactionsScreen>
               ],
             ),
           ),
-          const SizedBox(height: 16),
 
           // Filtros mejorados
           Padding(
@@ -173,18 +189,27 @@ class _TransactionsScreenState extends State<TransactionsScreen>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.receipt_long_rounded,
-                          size: 56,
-                          color: cs.onSurfaceVariant.withOpacity(0.3),
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: cs.primary.withOpacity(0.1),
+                          ),
+                          child: Icon(
+                            Icons.receipt_long_rounded,
+                            size: 40,
+                            color: cs.primary.withOpacity(0.5),
+                          ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
                         Text(
                           'No hay transacciones',
                           style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
                             color: cs.onSurfaceVariant,
+                            letterSpacing: 0.2,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -193,16 +218,17 @@ class _TransactionsScreenState extends State<TransactionsScreen>
                           style: TextStyle(
                             fontSize: 14,
                             color: cs.onSurfaceVariant.withOpacity(0.6),
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     itemCount: txs.length,
                     itemBuilder: (_, i) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: TransactionCard(tx: txs[i]),
                     ),
                   ),
@@ -213,7 +239,7 @@ class _TransactionsScreenState extends State<TransactionsScreen>
   }
 }
 
-/// Barra de búsqueda estilo Apple mejorada
+/// Barra de búsqueda estilo Apple premium
 class AppleSearchBar extends StatefulWidget {
   final TextEditingController controller;
   final ValueChanged<String> onSearchChanged;
@@ -268,19 +294,19 @@ class _AppleSearchBarState extends State<AppleSearchBar>
         return Container(
           decoration: BoxDecoration(
             color: cs.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: cs.outlineVariant.withOpacity(
-                0.3 + (_focusController.value * 0.4),
+              color: cs.primary.withOpacity(
+                0.2 + (_focusController.value * 0.5),
               ),
-              width: 1,
+              width: 1.5,
             ),
             boxShadow: [
               if (_focusController.value > 0.1)
                 BoxShadow(
-                  color: cs.primary.withOpacity(_focusController.value * 0.15),
-                  blurRadius: 12 * _focusController.value,
-                  offset: const Offset(0, 4),
+                  color: cs.primary.withOpacity(_focusController.value * 0.2),
+                  blurRadius: 16 * _focusController.value,
+                  offset: const Offset(0, 6),
                 ),
             ],
           ),
@@ -289,10 +315,13 @@ class _AppleSearchBarState extends State<AppleSearchBar>
             focusNode: _focusNode,
             onChanged: widget.onSearchChanged,
             decoration: InputDecoration(
-              prefixIcon: Icon(
-                Icons.search_rounded,
-                color: cs.onSurfaceVariant.withOpacity(0.7),
-                size: 20,
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: 12, right: 8),
+                child: Icon(
+                  Icons.search_rounded,
+                  color: cs.primary.withOpacity(0.6),
+                  size: 22,
+                ),
               ),
               suffixIcon: widget.controller.text.isNotEmpty
                   ? GestureDetector(
@@ -301,28 +330,32 @@ class _AppleSearchBarState extends State<AppleSearchBar>
                         widget.onSearchChanged('');
                         setState(() {});
                       },
-                      child: Icon(
-                        Icons.close_rounded,
-                        color: cs.onSurfaceVariant.withOpacity(0.7),
-                        size: 20,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Icon(
+                          Icons.cloud_circle_rounded,
+                          color: cs.primary.withOpacity(0.6),
+                          size: 20,
+                        ),
                       ),
                     )
                   : null,
               hintText: 'Buscar transacciones...',
               hintStyle: TextStyle(
-                color: cs.onSurfaceVariant.withOpacity(0.6),
+                color: cs.onSurfaceVariant.withOpacity(0.5),
                 fontSize: 16,
+                fontWeight: FontWeight.w500,
               ),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
+                horizontal: 4,
                 vertical: 14,
               ),
             ),
             style: TextStyle(
               fontSize: 16,
               color: cs.onSurface,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
             cursorColor: cs.primary,
           ),
@@ -332,7 +365,7 @@ class _AppleSearchBarState extends State<AppleSearchBar>
   }
 }
 
-/// Dropdown estilo Apple mejorado
+/// Dropdown estilo Apple premium
 class AppleDropdownButton extends StatefulWidget {
   final String value;
   final List<String> items;
@@ -376,11 +409,18 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: cs.outlineVariant.withOpacity(0.5),
-          width: 1,
+          color: cs.outlineVariant.withOpacity(0.3),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,11 +430,12 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
               widget.label!,
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: cs.onSurfaceVariant.withOpacity(0.7),
+                fontWeight: FontWeight.w700,
+                color: cs.primary,
+                letterSpacing: 0.3,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
           ],
           DropdownButton<String>(
             value: _currentValue,
@@ -405,7 +446,7 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
                         item,
                         style: TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           color: textColor,
                         ),
                       ),
@@ -421,8 +462,8 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
             isDense: true,
             isExpanded: true,
             icon: Icon(
-              Icons.unfold_more_rounded,
-              size: 20,
+              Icons.expand_more_rounded,
+              size: 22,
               color: cs.primary.withOpacity(0.7),
             ),
           ),
@@ -432,7 +473,7 @@ class _AppleDropdownButtonState extends State<AppleDropdownButton> {
   }
 }
 
-/// Tarjeta de resumen estilo Apple mejorada
+/// Tarjeta de resumen estilo Apple premium
 class AppleSummaryCard extends StatelessWidget {
   final String label;
   final double value;
@@ -446,7 +487,7 @@ class AppleSummaryCard extends StatelessWidget {
   });
 
   String _formatCurrency(double amount) {
-    return '\$${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}';
+    return 'S/ ${amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}';
   }
 
   @override
@@ -454,8 +495,8 @@ class AppleSummaryCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black87;
 
-    final bgColor = isExpense ? Colors.red[500] : Colors.green[500];
-    final borderColor = isExpense ? Colors.red[400] : Colors.green[400];
+    final bgColor = isExpense ? const Color(0xFFFF6B6B) : const Color(0xFF51CF66);
+    final borderColor = isExpense ? const Color(0xFFFF5252) : const Color(0xFF40C057);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
@@ -464,33 +505,51 @@ class AppleSummaryCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            bgColor!.withOpacity(0.15),
+            bgColor.withOpacity(0.15),
             bgColor.withOpacity(0.05),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: borderColor!.withOpacity(0.3),
+          color: borderColor.withOpacity(0.3),
           width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: bgColor.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                isExpense ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
-                size: 20,
-                color: bgColor,
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: bgColor.withOpacity(0.2),
+                ),
+                child: Icon(
+                  isExpense
+                      ? Icons.arrow_downward_rounded
+                      : Icons.arrow_upward_rounded,
+                  size: 18,
+                  color: bgColor,
+                ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Text(
                 label,
                 style: TextStyle(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   fontSize: 14,
                   color: textColor,
+                  letterSpacing: 0.2,
                 ),
               ),
             ],
@@ -502,6 +561,7 @@ class AppleSummaryCard extends StatelessWidget {
               color: bgColor,
               fontWeight: FontWeight.w800,
               fontSize: 24,
+              letterSpacing: -0.5,
             ),
           ),
         ],

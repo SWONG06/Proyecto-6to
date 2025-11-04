@@ -60,11 +60,41 @@ class _ReportsScreenState extends State<ReportsScreen>
 
     return CustomScrollView(
       slivers: [
-        // Sección de filtros (NO pegajosa)
+        // Header mejorado
         SliverToBoxAdapter(
           child: Container(
-            color: Theme.of(context).scaffoldBackgroundColor,
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            color: cs.surface,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Reportes y Análisis',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: textColor,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Visualiza tus datos financieros',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: cs.onSurfaceVariant.withOpacity(0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        // Sección de filtros mejorada
+        SliverToBoxAdapter(
+          child: Container(
+            color: cs.background,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -72,8 +102,9 @@ class _ReportsScreenState extends State<ReportsScreen>
                   'Filtros',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w800,
                     color: textColor,
+                    letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -106,7 +137,8 @@ class _ReportsScreenState extends State<ReportsScreen>
             ),
           ),
         ),
-        // Sección de estadísticas
+
+        // Sección de estadísticas mejorada
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
@@ -114,28 +146,31 @@ class _ReportsScreenState extends State<ReportsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Estadísticas',
+                  'Estadísticas Clave',
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w800,
                     color: textColor,
+                    letterSpacing: 0.2,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Column(
                   children: [
                     AppleStatCard(
-                      title: 'Variación gastos',
+                      title: 'Variación Gastos',
                       value: '+${_formatPercentage(widget.state.reportThisMonthExpenseVarPct)}',
                       icon: Icons.trending_down_rounded,
                       iconColor: Colors.red[400],
+                      subtitle: 'vs mes anterior',
                     ),
                     const SizedBox(height: 12),
                     AppleStatCard(
-                      title: 'Margen beneficio',
+                      title: 'Margen de Beneficio',
                       value: _formatPercentage(widget.state.reportThisMonthMarginPct),
                       icon: Icons.trending_up_rounded,
                       iconColor: Colors.green[400],
+                      subtitle: 'Rentabilidad actual',
                     ),
                   ],
                 ),
@@ -143,32 +178,69 @@ class _ReportsScreenState extends State<ReportsScreen>
             ),
           ),
         ),
-        // Gráfico de tendencias
+
+        // Gráfico de tendencias mejorado
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Tendencias',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Tendencias',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: textColor,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: cs.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: cs.primary.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        _selectedPeriod,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: cs.primary,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Container(
                   decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16),
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: cs.outlineVariant.withOpacity(0.5),
-                      width: 1,
+                      color: cs.outlineVariant.withOpacity(0.2),
+                      width: 1.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: DualLineChart(
                     labels: widget.state.months,
                     seriesA: widget.state.trendProfit,
@@ -181,32 +253,51 @@ class _ReportsScreenState extends State<ReportsScreen>
             ),
           ),
         ),
-        // Gráfico de distribución
+
+        // Gráfico de distribución mejorado
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Distribución por categoría',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Distribución por Categoría',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: textColor,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    Icon(
+                      Icons.pie_chart_rounded,
+                      color: cs.primary.withOpacity(0.6),
+                      size: 24,
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
                 Container(
                   decoration: BoxDecoration(
-                    color: cs.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(16),
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(18),
                     border: Border.all(
-                      color: cs.outlineVariant.withOpacity(0.5),
-                      width: 1,
+                      color: cs.outlineVariant.withOpacity(0.2),
+                      width: 1.5,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.04),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: CategoryDistributionChart(
                     data: widget.state.categoryDistribution,
                   ),
@@ -215,8 +306,9 @@ class _ReportsScreenState extends State<ReportsScreen>
             ),
           ),
         ),
+
         const SliverToBoxAdapter(
-          child: SizedBox(height: 20),
+          child: SizedBox(height: 24),
         ),
       ],
     );
@@ -230,36 +322,9 @@ class _ReportsScreenState extends State<ReportsScreen>
 // ignore: non_constant_identifier_names
 Widget? DualLineChart({required List<String> labels, required List<double> seriesA, required List<double> seriesB, required String labelA, required String labelB}) {
   return null;
-
 }
 
-/// Delegate para el header pegajoso de filtros
-// ignore: unused_element
-class _FilterHeaderDelegate extends SliverPersistentHeaderDelegate {
-  final Widget child;
-
-  _FilterHeaderDelegate({required this.child});
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    return SizedBox.expand(child: child);
-  }
-
-  @override
-  double get maxExtent => 110;
-
-  @override
-  double get minExtent => 110;
-
-  @override
-  bool shouldRebuild(_FilterHeaderDelegate oldDelegate) => false;
-}
-
-/// Chip de filtro estilo Apple
+/// Chip de filtro estilo Apple premium
 class AppleFilterChip extends StatefulWidget {
   final String label;
   final List<String> options;
@@ -304,11 +369,18 @@ class _AppleFilterChipState extends State<AppleFilterChip> {
     return Container(
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: cs.outlineVariant.withOpacity(0.5),
-          width: 1,
+          color: cs.outlineVariant.withOpacity(0.3),
+          width: 1.5,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: DropdownButton<String>(
         value: _currentValue,
@@ -319,7 +391,7 @@ class _AppleFilterChipState extends State<AppleFilterChip> {
                     option,
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: textColor,
                     ),
                   ),
@@ -347,9 +419,9 @@ class _AppleFilterChipState extends State<AppleFilterChip> {
               const SizedBox(width: 8),
             ],
             Icon(
-              Icons.unfold_more_rounded,
-              size: 18,
-              color: cs.onSurfaceVariant.withOpacity(0.7),
+              Icons.expand_more_rounded,
+              size: 20,
+              color: cs.primary.withOpacity(0.7),
             ),
           ],
         ),
@@ -358,12 +430,13 @@ class _AppleFilterChipState extends State<AppleFilterChip> {
   }
 }
 
-/// Tarjeta de estadísticas estilo Apple
+/// Tarjeta de estadísticas estilo Apple premium
 class AppleStatCard extends StatefulWidget {
   final String title;
   final String value;
   final IconData icon;
   final Color? iconColor;
+  final String? subtitle;
 
   const AppleStatCard({
     super.key,
@@ -371,6 +444,7 @@ class AppleStatCard extends StatefulWidget {
     required this.value,
     required this.icon,
     this.iconColor,
+    this.subtitle,
   });
 
   @override
@@ -417,46 +491,53 @@ class _AppleStatCardState extends State<AppleStatCard>
         onExit: (_) => _hoverController.reverse(),
         child: Container(
           decoration: BoxDecoration(
-            color: cs.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(14),
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: cs.outlineVariant.withOpacity(0.5),
-              width: 1,
+              color: cs.outlineVariant.withOpacity(0.2),
+              width: 1.5,
             ),
             boxShadow: [
               BoxShadow(
                 color: bgColor.withOpacity(0.1),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      bgColor.withOpacity(0.2),
+                      bgColor.withOpacity(0.25),
                       bgColor.withOpacity(0.1),
                     ],
                   ),
                   border: Border.all(
-                    color: bgColor.withOpacity(0.3),
-                    width: 1,
+                    color: bgColor.withOpacity(0.4),
+                    width: 1.5,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: bgColor.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
                 child: Icon(
                   widget.icon,
                   color: bgColor,
-                  size: 24,
+                  size: 28,
                 ),
               ),
               const SizedBox(width: 16),
@@ -469,7 +550,8 @@ class _AppleStatCardState extends State<AppleStatCard>
                       style: TextStyle(
                         fontSize: 13,
                         color: subtextColor,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -477,10 +559,22 @@ class _AppleStatCardState extends State<AppleStatCard>
                       widget.value,
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        fontSize: 22,
+                        fontSize: 24,
                         color: textColor,
+                        letterSpacing: -0.5,
                       ),
                     ),
+                    if (widget.subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.subtitle!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant.withOpacity(0.5),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -8,10 +9,11 @@ import 'screens/dashboard_screen.dart';
 import 'screens/add_transaction_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/reports_screen.dart';
-import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/market_news_screen.dart';
 import 'screens/notification_icon_button.dart';
+import 'screens/login_screen.dart';
+import 'screens/user_profile_screen.dart';
 import 'state/finance_app_state.dart';
 
 Future<void> main() async {
@@ -33,6 +35,7 @@ class FinanceCloudApp extends StatefulWidget {
 class _FinanceCloudAppState extends State<FinanceCloudApp> {
   ThemeMode _themeMode = ThemeMode.system;
   bool _isAutomaticTheme = false;
+  bool _isLoggedIn = false;
 
   bool _isDarkModeByTime() {
     final hour = DateTime.now().hour;
@@ -72,12 +75,32 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
         Locale('en', ''),
         Locale('es', ''),
       ],
-      home: MainScreen(
-        themeMode: _themeMode,
-        isAutomaticTheme: _isAutomaticTheme,
-        onThemeChanged: _updateThemeMode,
-        onAutomaticThemeChanged: _updateAutomaticTheme,
-      ),
+      home: _isLoggedIn
+          ? MainScreen(
+              themeMode: _themeMode,
+              isAutomaticTheme: _isAutomaticTheme,
+              onThemeChanged: _updateThemeMode,
+              onAutomaticThemeChanged: _updateAutomaticTheme,
+            )
+          : LoginScreen(
+              onLoginSuccess: () {
+                setState(() => _isLoggedIn = true);
+              },
+            ),
+      routes: {
+        '/login': (context) => LoginScreen(
+          onLoginSuccess: () {
+            Navigator.of(context).pushReplacementNamed('/main');
+            setState(() => _isLoggedIn = true);
+          },
+        ),
+        '/main': (context) => MainScreen(
+          themeMode: _themeMode,
+          isAutomaticTheme: _isAutomaticTheme,
+          onThemeChanged: _updateThemeMode,
+          onAutomaticThemeChanged: _updateAutomaticTheme,
+        ),
+      },
     );
   }
 }
@@ -135,18 +158,6 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  void _navigateToProfile(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProfileScreen(
-          themeMode: widget.themeMode,
-          onThemeChanged: widget.onThemeChanged,
-        ),
-      ),
-    );
-  }
-
   void _navigateToScreen(int index) {
     setState(() => _currentIndex = index);
   }
@@ -158,7 +169,17 @@ class _MainScreenState extends State<MainScreen> {
           state: _state,
           themeMode: widget.themeMode,
           onThemeChanged: widget.onThemeChanged,
-          onNavigateToProfile: () => _navigateToProfile(context),
+          onNavigateToProfile: () {
+            if (kDebugMode) {
+              print('Navegando a perfil');
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Perfil del usuario'),
+                duration: Duration(seconds: 2),
+              ),
+            );
+          },
           notifications: _notifications,
         );
       case 1:
@@ -197,7 +218,7 @@ class _MainScreenState extends State<MainScreen> {
           state: _state,
           themeMode: widget.themeMode,
           onThemeChanged: widget.onThemeChanged,
-          onNavigateToProfile: () => _navigateToProfile(context),
+          onNavigateToProfile: () {},
           notifications: _notifications,
         );
     }
