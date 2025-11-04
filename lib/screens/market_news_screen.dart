@@ -37,8 +37,8 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
         title: news.title,
         description: news.summary,
         fullContent: news.summary,
-        category: news.program,
-        time: _getTimeAgo(news.publishDate),
+        category: news.program ?? 'General', // Valor por defecto si es null
+        time: news.publishDate != null ? _getTimeAgo(news.publishDate!) : 'Reciente', // Manejo de null
         icon: news.program == 'Cresco' ? Icons.trending_up : Icons.eco,
         color: news.program == 'Cresco' ? Colors.blue : Colors.green,
       )).toList();
@@ -50,11 +50,13 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
   String _getTimeAgo(DateTime date) {
     final difference = DateTime.now().difference(date);
     if (difference.inDays > 0) {
-      return '${difference.inDays} días';
+      return '${difference.inDays} día${difference.inDays > 1 ? 's' : ''}';
     } else if (difference.inHours > 0) {
-      return '${difference.inHours} horas';
+      return '${difference.inHours} hora${difference.inHours > 1 ? 's' : ''}';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minuto${difference.inMinutes > 1 ? 's' : ''}';
     } else {
-      return '${difference.inMinutes} minutos';
+      return 'Ahora';
     }
   }
   
@@ -142,8 +144,6 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Noticias Financieras'),

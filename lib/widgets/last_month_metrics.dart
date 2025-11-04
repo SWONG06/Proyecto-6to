@@ -1,3 +1,8 @@
+// ignore_for_file: non_constant_identifier_names
+
+import 'dart:core';
+
+import 'package:financecloud/state/finance_app_state.dart';
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart';
 import '../utils/formatters.dart';
@@ -66,6 +71,7 @@ class LastMonthMetrics extends StatelessWidget {
                   iconColor: Colors.green,
                 ),
               ),
+              const SizedBox(width: 8),
               Expanded(
                 child: _MetricItem(
                   title: 'Gastos',
@@ -173,10 +179,13 @@ class _MetricItem extends StatelessWidget {
               color: iconColor,
             ),
             const SizedBox(width: 4),
-            Text(
-              formatCurrency(value),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+            Flexible(
+              child: Text(
+                formatCurrency(value),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -184,4 +193,15 @@ class _MetricItem extends StatelessWidget {
       ],
     );
   }
+}
+
+String formatCurrency(double value) {
+  // Formatea el valor como moneda (asumiendo formato hispanoamericano)
+  final formattedValue = value.toStringAsFixed(2);
+  
+  // Añade el símbolo de moneda ($ para dólares o S/ para soles)
+  return '\$${formattedValue.replaceAll('.', ',')}';
+  
+  // Alternativa para soles peruanos:
+  // return 'S/ ${formattedValue.replaceAll('.', ',')}';
 }

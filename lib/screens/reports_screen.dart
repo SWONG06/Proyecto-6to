@@ -1,7 +1,8 @@
+import 'package:financecloud/state/finance_app_state.dart';
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart';
 import '../utils/formatters.dart';
-import '../widgets/dual_line_chart.dart';
+import '../widgets/dual_line_chart.dart' hide CategoryDistributionChart;
 import '../widgets/category_distribution_chart.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -59,7 +60,6 @@ class _ReportsScreenState extends State<ReportsScreen>
 
     return CustomScrollView(
       slivers: [
-    
         // Sección de filtros (NO pegajosa)
         SliverToBoxAdapter(
           child: Container(
@@ -126,14 +126,14 @@ class _ReportsScreenState extends State<ReportsScreen>
                   children: [
                     AppleStatCard(
                       title: 'Variación gastos',
-                      value: '+${pct(widget.state.reportThisMonthExpenseVarPct)}',
+                      value: '+${_formatPercentage(widget.state.reportThisMonthExpenseVarPct)}',
                       icon: Icons.trending_down_rounded,
                       iconColor: Colors.red[400],
                     ),
                     const SizedBox(height: 12),
                     AppleStatCard(
                       title: 'Margen beneficio',
-                      value: pct(widget.state.reportThisMonthMarginPct),
+                      value: _formatPercentage(widget.state.reportThisMonthMarginPct),
                       icon: Icons.trending_up_rounded,
                       iconColor: Colors.green[400],
                     ),
@@ -221,6 +221,16 @@ class _ReportsScreenState extends State<ReportsScreen>
       ],
     );
   }
+
+  String _formatPercentage(double value) {
+    return '${value.toStringAsFixed(1)}%';
+  }
+}
+
+// ignore: non_constant_identifier_names
+Widget? DualLineChart({required List<String> labels, required List<double> seriesA, required List<double> seriesB, required String labelA, required String labelB}) {
+  return null;
+
 }
 
 /// Delegate para el header pegajoso de filtros

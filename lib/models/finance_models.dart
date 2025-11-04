@@ -24,7 +24,7 @@ class FinanceTransaction {
     required this.amount,
     required this.date,
     required this.type,
-    this.description,
+    this.description, required String id,
   });
 }
 
@@ -51,7 +51,7 @@ class FinanceCard {
     required this.currentUsage,
     required this.limit,
     required this.usagePercentage,
-    this.daysUntilCutoff,
+    this.daysUntilCutoff, required String id,
   });
 }
 

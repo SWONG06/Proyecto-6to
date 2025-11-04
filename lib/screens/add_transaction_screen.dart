@@ -3,13 +3,15 @@ import '../models/finance_models.dart';
 import '../utils/formatters.dart';
 
 class AddTransactionScreen extends StatefulWidget {
-  final void Function(Transaction) onSaved;
+  final void Function(FinanceTransaction) onSaved;
+  final ThemeMode themeMode;
+  final ValueChanged<bool> onThemeChanged;
 
   const AddTransactionScreen({
     super.key,
     required this.onSaved,
-    required ThemeMode themeMode,
-    required ValueChanged<bool> onThemeChanged,
+    required this.themeMode,
+    required this.onThemeChanged,
   });
 
   @override
@@ -19,7 +21,7 @@ class AddTransactionScreen extends StatefulWidget {
 class _AddTransactionScreenState extends State<AddTransactionScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  TransactionType _type = TransactionType.expense;
+  late TxType _type;
   String? _snackBarMessage;
 
   final _amountCtrl = TextEditingController();
@@ -27,7 +29,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   final _descCtrl = TextEditingController();
   DateTime? _selectedDate;
   String? _selectedCategory;
-  String? _selectedMethod;
 
   final List<String> _categories = [
     'Transporte',
@@ -40,14 +41,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     'Otros'
   ];
 
-  final List<String> _paymentMethods = [
-    'Tarjeta Visa',
-    'Tarjeta MasterCard',
-    'Transferencia',
-    'Efectivo',
-    'Cheque',
-    'Otro'
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _type = TxType.expense;
+  }
 
   @override
   void dispose() {
@@ -70,29 +68,30 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     if (res != null) {
       setState(() {
         _selectedDate = res;
-        _dateCtrl.text = formatDate(res);
+        _dateCtrl.text = _formatDate(res);
       });
     }
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    final tx = Transaction(
+    final tx = FinanceTransaction(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _descCtrl.text.trim().split('\n').first,
       amount: double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
       category: _selectedCategory ?? '',
       date: _selectedDate ?? DateTime.now(),
-      type: _type,
+      type: _type, paymentMethod: '',
     );
     widget.onSaved(tx);
     setState(() {
       _snackBarMessage = 'Transacción guardada';
-      _type = TransactionType.expense;
+      _type = TxType.expense;
       _selectedDate = null;
       _selectedCategory = null;
-      _selectedMethod = null;
       _dateCtrl.clear();
+      _amountCtrl.clear();
+      _descCtrl.clear();
     });
     _formKey.currentState!.reset();
   }
@@ -142,31 +141,29 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(4),
-                child: SegmentedButton<TransactionType>(
+                child: SegmentedButton<TxType>(
                   segments: [
                     ButtonSegment(
-                      value: TransactionType.expense,
+                      value: TxType.expense,
                       icon: const Icon(Icons.arrow_downward_rounded),
                       label: Text(
                         'Gasto',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: _type == TransactionType.expense
-                              ? textColor
-                              : hintColor,
+                          color: hintColor,
                         ),
                       ),
                     ),
                     ButtonSegment(
-                      value: TransactionType.income,
+                      value: TxType.income,
                       icon: const Icon(Icons.arrow_upward_rounded),
                       label: Text(
                         'Ingreso',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: _type == TransactionType.income
+                          color: _type == TxType.income
                               ? textColor
                               : hintColor,
                         ),
@@ -433,5 +430,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
       ),
       validator: validator,
     );
+  }
+  
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 }

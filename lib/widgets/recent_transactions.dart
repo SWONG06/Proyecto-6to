@@ -1,3 +1,4 @@
+import 'package:financecloud/screens/add_transaction_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart';
 import '../utils/formatters.dart';
@@ -162,15 +163,15 @@ class _TransactionItem extends StatelessWidget {
             children: [
               Text(
                 isExpense
-                    ? '-${formatCurrency(transaction.amount)}'
-                    : formatCurrency(transaction.amount),
+                    ? '-${_formatCurrency(transaction.amount)}'
+                    : _formatCurrency(transaction.amount),
                 style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: isExpense ? Colors.red : Colors.green,
                 ),
               ),
               Text(
-                formatDate(transaction.date),
+                _formatDate(transaction.date),
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurface.withOpacity(0.6),
                 ),
@@ -180,5 +181,13 @@ class _TransactionItem extends StatelessWidget {
         ],
       ),
     );
+  }
+  
+  String _formatCurrency(double amount) {
+    return '\$${amount.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+  
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 }

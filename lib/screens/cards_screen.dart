@@ -1,3 +1,7 @@
+// ignore_for_file: unnecessary_cast
+
+import 'package:financecloud/screens/add_transaction_screen.dart';
+import 'package:financecloud/widgets/last_month_metrics.dart' show formatCurrency;
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart' as models;
@@ -256,10 +260,10 @@ class _CardsScreenState extends material.State<CardsScreen> {
                     material.Row(
                       mainAxisAlignment: material.MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(formatCurrency(card.currentUsage),
+                        Text(formatCurrency(card.currentUsage) as String,
                             style: const TextStyle(
                                 color: material.Colors.white, fontSize: 14)),
-                        Text(formatCurrency(card.limit),
+                        Text(formatCurrency(card.limit) as String,
                             style: const TextStyle(
                                 color: material.Colors.white, fontSize: 14)),
                       ],
@@ -343,5 +347,9 @@ class _CardsScreenState extends material.State<CardsScreen> {
         ],
       ),
     );
+  }
+  
+  String formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 }

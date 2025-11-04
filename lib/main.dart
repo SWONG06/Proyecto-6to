@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // 👈 Importante
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'utils/theme.dart';
 import 'models/finance_models.dart';
 import 'screens/dashboard_screen.dart';
@@ -102,7 +102,9 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  final FinanceAppState _state = FinanceAppState.seed();
+  late Future<FinanceAppState> _stateFuture;
+  late FinanceAppState _state;
+
   final List<NotificationItem> _notifications = [
     NotificationItem(
       id: '1',
@@ -121,6 +123,17 @@ class _MainScreenState extends State<MainScreen> {
       color: Colors.orange,
     ),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _stateFuture = FinanceAppState.seed();
+    _stateFuture.then((state) {
+      setState(() {
+        _state = state;
+      });
+    });
+  }
 
   void _navigateToProfile(BuildContext context) {
     Navigator.push(
@@ -150,7 +163,11 @@ class _MainScreenState extends State<MainScreen> {
         );
       case 1:
         return AddTransactionScreen(
-          onSaved: (tx) => setState(() => _state.transactions.insert(0, tx)),
+          onSaved: (tx) {
+            setState(() {
+              _state.addTransaction(tx);
+            });
+          },
           themeMode: widget.themeMode,
           onThemeChanged: widget.onThemeChanged,
         );
@@ -208,105 +225,128 @@ class _MainScreenState extends State<MainScreen> {
       return item['label'];
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          getCurrentTitle(),
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            letterSpacing: -0.5,
-          ),
-        ),
-        centerTitle: false,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: Colors.transparent,
-        actions: [
-          NotificationIconButton(
-            notificationCount:
-                _notifications.where((n) => !n.isRead).length,
-            onPressed: () {},
-            notifications: _notifications,
-            onNotificationTapped: (notification) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(notification.title),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: PopupMenuButton<int>(
-              icon: Icon(
-                Icons.more_horiz_rounded,
-                size: 26,
-                color: cs.onSurface,
+    return FutureBuilder<FinanceAppState>(
+      future: _stateFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(
+                color: cs.primary,
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(
+              child: Text('Error: ${snapshot.error}'),
+            ),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(
+              getCurrentTitle(),
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                letterSpacing: -0.5,
               ),
-              color: isDark
-                  ? cs.surface.withOpacity(0.95)
-                  : Colors.white.withOpacity(0.98),
-              elevation: 0,
-              offset: const Offset(0, 10),
-              onSelected: (index) {
-                HapticFeedback.selectionClick();
-                _navigateToScreen(index);
-              },
-              itemBuilder: (BuildContext context) {
-                return menuItems.map((item) {
-                  final isActive = _currentIndex == item['index'];
-                  return PopupMenuItem<int>(
-                    value: item['index'],
-                    height: 44,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? cs.primary.withOpacity(0.08)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            item['icon'],
-                            color: isActive ? cs.primary : cs.onSurface,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            item['label'],
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: isActive
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                              color: isActive ? cs.primary : cs.onSurface,
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                        ],
-                      ),
+            ),
+            centerTitle: false,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            backgroundColor: Colors.transparent,
+            actions: [
+              NotificationIconButton(
+                notificationCount:
+                    _notifications.where((n) => !n.isRead).length,
+                onPressed: () {},
+                notifications: _notifications,
+                onNotificationTapped: (notification) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(notification.title),
+                      duration: const Duration(seconds: 2),
                     ),
                   );
-                }).toList();
-              },
-            ),
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 12.0),
+                child: PopupMenuButton<int>(
+                  icon: Icon(
+                    Icons.more_horiz_rounded,
+                    size: 26,
+                    color: cs.onSurface,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  color: isDark
+                      ? cs.surface.withOpacity(0.95)
+                      : Colors.white.withOpacity(0.98),
+                  elevation: 0,
+                  offset: const Offset(0, 10),
+                  onSelected: (index) {
+                    HapticFeedback.selectionClick();
+                    _navigateToScreen(index);
+                  },
+                  itemBuilder: (BuildContext context) {
+                    return menuItems.map((item) {
+                      final isActive = _currentIndex == item['index'];
+                      return PopupMenuItem<int>(
+                        value: item['index'],
+                        height: 44,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? cs.primary.withOpacity(0.08)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                item['icon'],
+                                color: isActive ? cs.primary : cs.onSurface,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                item['label'],
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: isActive
+                                      ? FontWeight.w600
+                                      : FontWeight.w500,
+                                  color: isActive ? cs.primary : cs.onSurface,
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList();
+                  },
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: _buildScreen(_currentIndex),
-      ),
+          body: SafeArea(
+            child: _buildScreen(_currentIndex),
+          ),
+        );
+      },
     );
   }
 }
