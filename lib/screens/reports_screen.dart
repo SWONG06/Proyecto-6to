@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart';
-import '../utils/format.dart';
+import '../utils/formatters.dart';
 import '../widgets/dual_line_chart.dart';
 import '../widgets/category_distribution_chart.dart';
 

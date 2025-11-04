@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart';
-import '../utils/format.dart';
+import '../utils/formatters.dart';
 
 class AddTransactionScreen extends StatefulWidget {
-  final void Function(FinanceTransaction) onSaved;
+  final void Function(Transaction) onSaved;
 
   const AddTransactionScreen({
     super.key,
@@ -19,7 +19,7 @@ class AddTransactionScreen extends StatefulWidget {
 class _AddTransactionScreenState extends State<AddTransactionScreen>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
-  TxType _type = TxType.expense;
+  TransactionType _type = TransactionType.expense;
   String? _snackBarMessage;
 
   final _amountCtrl = TextEditingController();
@@ -70,26 +70,25 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     if (res != null) {
       setState(() {
         _selectedDate = res;
-        _dateCtrl.text = dateShort(res);
+        _dateCtrl.text = formatDate(res);
       });
     }
   }
 
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    final tx = FinanceTransaction(
+    final tx = Transaction(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: _descCtrl.text.trim().split('\n').first,
       amount: double.tryParse(_amountCtrl.text.replaceAll(',', '')) ?? 0,
       category: _selectedCategory ?? '',
       date: _selectedDate ?? DateTime.now(),
-      paymentMethod: _selectedMethod ?? 'N/D',
       type: _type,
-      description: _descCtrl.text.trim(),
     );
     widget.onSaved(tx);
     setState(() {
       _snackBarMessage = 'Transacción guardada';
-      _type = TxType.expense;
+      _type = TransactionType.expense;
       _selectedDate = null;
       _selectedCategory = null;
       _selectedMethod = null;
@@ -143,29 +142,33 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 padding: const EdgeInsets.all(4),
-                child: SegmentedButton<TxType>(
+                child: SegmentedButton<TransactionType>(
                   segments: [
                     ButtonSegment(
-                      value: TxType.expense,
+                      value: TransactionType.expense,
                       icon: const Icon(Icons.arrow_downward_rounded),
                       label: Text(
                         'Gasto',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: _type == TxType.expense ? textColor : hintColor,
+                          color: _type == TransactionType.expense
+                              ? textColor
+                              : hintColor,
                         ),
                       ),
                     ),
                     ButtonSegment(
-                      value: TxType.income,
+                      value: TransactionType.income,
                       icon: const Icon(Icons.arrow_upward_rounded),
                       label: Text(
                         'Ingreso',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: _type == TxType.income ? textColor : hintColor,
+                          color: _type == TransactionType.income
+                              ? textColor
+                              : hintColor,
                         ),
                       ),
                     ),
@@ -182,7 +185,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                 label: 'Monto',
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
-                prefixText: r'$ ',
+                prefixText: r'S/ ',
                 textColor: textColor,
                 labelColor: labelColor,
                 hintColor: hintColor,
@@ -216,18 +219,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                 labelColor: labelColor,
                 validator: (_) =>
                     _selectedDate == null ? 'Requerido' : null,
-              ),
-              const SizedBox(height: 16),
-
-              // 🔹 Método de pago
-              _buildAppleDropdown<String>(
-                value: _selectedMethod,
-                label: 'Método de pago',
-                items: _paymentMethods,
-                onChanged: (val) => setState(() => _selectedMethod = val),
-                textColor: textColor,
-                labelColor: labelColor,
-                hintColor: hintColor,
               ),
               const SizedBox(height: 16),
 

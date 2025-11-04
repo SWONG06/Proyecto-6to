@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../models/finance_models.dart';
-import '../utils/format.dart';
+import '../utils/formatters.dart';
 import 'money_text.dart';
 
 class TransactionCard extends StatelessWidget {

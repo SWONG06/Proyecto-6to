@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../utils/format.dart';
+import '../utils/formatters.dart';
 
 class CategoryDistributionChart extends StatelessWidget {
   final Map<String, double> data;

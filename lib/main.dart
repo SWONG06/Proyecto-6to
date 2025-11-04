@@ -12,6 +12,7 @@ import 'screens/profile_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/market_news_screen.dart';
 import 'screens/notification_icon_button.dart';
+import 'state/finance_app_state.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

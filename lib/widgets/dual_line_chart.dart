@@ -1,31 +1,19 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
-class DualLineChart extends StatelessWidget {
-  final List<String> labels;
-  final List<double> seriesA;
-  final List<double> seriesB;
-  final String labelA;
-  final String labelB;
+class CategoryDistributionChart extends StatelessWidget {
+  final Map<String, double> data;
 
-  const DualLineChart({
-    super.key,
-    required this.labels,
-    required this.seriesA,
-    required this.seriesB,
-    required this.labelA,
-    required this.labelB,
-  });
+  const CategoryDistributionChart({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    assert(labels.length == seriesA.length && labels.length == seriesB.length);
-    final maxV = [
-      ...seriesA,
-      ...seriesB,
-    ].reduce((a, b) => a > b ? a : b) * 1.25;
-
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    // Normaliza los datos
+    final total = data.values.fold(0.0, (sum, v) => sum + v);
+    final entries = data.entries.toList();
 
     return Container(
       decoration: BoxDecoration(
@@ -34,82 +22,163 @@ class DualLineChart extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [
-                  const Color(0xFF1C1C1E),
-                  const Color(0xFF2C2C2E),
-                ]
-              : [
-                  Colors.white,
-                  const Color(0xFFF5F5F7),
-                ],
+              ? [const Color(0xFF1C1C1E), const Color(0xFF2C2C2E)]
+              : [Colors.white, const Color(0xFFF5F5F7)],
         ),
         boxShadow: [
           BoxShadow(
-            color: isDark
-                ? Colors.black.withOpacity(0.3)
-                : Colors.black.withOpacity(0.06),
+            color:
+                isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.06),
             blurRadius: 20,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: SizedBox(
-          height: 280,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-            child: Column(
-              children: [
-                // Leyenda superior estilo iOS
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _AppleLegendItem(
-                      color: cs.primary,
-                      text: labelA,
-                      isDark: isDark,
-                    ),
-                    const SizedBox(width: 16),
-                    _AppleLegendItem(
-                      color: cs.secondary,
-                      text: labelB,
-                      isDark: isDark,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // Gráfico
-                Expanded(
-                  child: CustomPaint(
-                    painter: _AppleLineChartPainter(
-                      labels: labels,
-                      a: seriesA,
-                      b: seriesB,
-                      maxV: maxV,
-                      colorA: cs.primary,
-                      colorB: cs.secondary,
-                      isDark: isDark,
-                    ),
-                  ),
-                ),
-              ],
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 220,
+            child: CustomPaint(
+              painter: _ApplePieChartPainter(entries, total, cs, isDark),
             ),
           ),
-        ),
+          const SizedBox(height: 20),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 12,
+            runSpacing: 8,
+            children: entries.map((e) {
+              final color = _colorForLabel(e.key, cs);
+              final percent = (e.value / total * 100).toStringAsFixed(1);
+              return _CategoryLegendItem(
+                color: color,
+                label: e.key,
+                value: '$percent%',
+                isDark: isDark,
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }
+
+  Color _colorForLabel(String label, ColorScheme cs) {
+    final colors = [
+      cs.primary,
+      cs.secondary,
+      Colors.orange,
+      Colors.green,
+      Colors.purple,
+      Colors.blueGrey,
+      Colors.pinkAccent,
+      Colors.teal,
+    ];
+    return colors[label.hashCode % colors.length];
+  }
 }
 
-class _AppleLegendItem extends StatelessWidget {
-  final Color color;
-  final String text;
+class _ApplePieChartPainter extends CustomPainter {
+  final List<MapEntry<String, double>> entries;
+  final double total;
+  final ColorScheme cs;
   final bool isDark;
 
-  const _AppleLegendItem({
+  _ApplePieChartPainter(this.entries, this.total, this.cs, this.isDark);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final radius = min(size.width, size.height) / 2.4;
+    final center = Offset(size.width / 2, size.height / 2);
+    double startAngle = -pi / 2;
+
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 36
+      ..strokeCap = StrokeCap.round;
+
+    for (final e in entries) {
+      final sweep = (e.value / total) * 2 * pi;
+      paint.color = _colorForLabel(e.key, cs);
+
+      // Sombra suave
+      final shadow = Paint()
+        ..color = paint.color.withOpacity(0.25)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4)
+        ..strokeWidth = 36
+        ..style = PaintingStyle.stroke;
+      canvas.drawArc(Rect.fromCircle(center: center, radius: radius),
+          startAngle, sweep, false, shadow);
+
+      // Segmento principal
+      canvas.drawArc(Rect.fromCircle(center: center, radius: radius),
+          startAngle, sweep, false, paint);
+
+      startAngle += sweep;
+    }
+
+    // Círculo interior
+    final innerPaint = Paint()
+      ..color = isDark ? const Color(0xFF1C1C1E) : Colors.white
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, radius - 28, innerPaint);
+
+    // Título central
+    final totalText = TextSpan(
+      text: 'Total',
+      style: TextStyle(
+        color: isDark ? Colors.white70 : Colors.black54,
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+    final valueText = TextSpan(
+      text: '\n${total.toStringAsFixed(0)}',
+      style: TextStyle(
+        color: isDark ? Colors.white : Colors.black87,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+      ),
+    );
+
+    final tp = TextPainter(
+      text: TextSpan(children: [totalText, valueText]),
+      textAlign: TextAlign.center,
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: size.width);
+    tp.paint(canvas, Offset(center.dx - tp.width / 2, center.dy - 22));
+  }
+
+  Color _colorForLabel(String label, ColorScheme cs) {
+    final colors = [
+      cs.primary,
+      cs.secondary,
+      Colors.orange,
+      Colors.green,
+      Colors.purple,
+      Colors.blueGrey,
+      Colors.pinkAccent,
+      Colors.teal,
+    ];
+    return colors[label.hashCode % colors.length];
+  }
+
+  @override
+  bool shouldRepaint(_ApplePieChartPainter oldDelegate) =>
+      oldDelegate.entries != entries || oldDelegate.total != total;
+}
+
+class _CategoryLegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
+  final String value;
+  final bool isDark;
+
+  const _CategoryLegendItem({
     required this.color,
-    required this.text,
+    required this.label,
+    required this.value,
     required this.isDark,
   });
 
@@ -118,12 +187,9 @@ class _AppleLegendItem extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -134,183 +200,27 @@ class _AppleLegendItem extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.5),
-                  blurRadius: 4,
-                  spreadRadius: 1,
-                ),
-              ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Text(
-            text,
+            label,
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white.withOpacity(0.9) : Colors.black87,
-              letterSpacing: -0.3,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              color: isDark ? Colors.white70 : Colors.black54,
             ),
           ),
         ],
       ),
     );
   }
-}
-
-class _AppleLineChartPainter extends CustomPainter {
-  final List<String> labels;
-  final List<double> a;
-  final List<double> b;
-  final double maxV;
-  final Color colorA;
-  final Color colorB;
-  final bool isDark;
-
-  _AppleLineChartPainter({
-    required this.labels,
-    required this.a,
-    required this.b,
-    required this.maxV,
-    required this.colorA,
-    required this.colorB,
-    required this.isDark,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final chartHeight = size.height - 40;
-    final stepX = size.width / (labels.length - 1);
-
-    Offset p(double xIdx, double v) {
-      final x = xIdx * stepX;
-      final y = chartHeight - (v / maxV) * chartHeight + 10;
-      return Offset(x, y);
-    }
-
-    // Grid horizontal estilo Apple (más sutil)
-    final gridPaint = Paint()
-      ..color = isDark
-          ? Colors.white.withOpacity(0.05)
-          : Colors.black.withOpacity(0.04)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    for (int i = 0; i <= 4; i++) {
-      final y = 10 + (chartHeight / 4) * i;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    void drawAppleSeries(List<double> s, Color c, bool isFirst) {
-      // Gradiente de relleno suave
-      final gradientPaint = Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            c.withOpacity(0.15),
-            c.withOpacity(0.02),
-          ],
-        ).createShader(Rect.fromLTWH(0, 0, size.width, chartHeight + 10));
-
-      final fillPath = Path();
-      fillPath.moveTo(0, chartHeight + 10);
-      for (int i = 0; i < s.length; i++) {
-        final pt = p(i.toDouble(), s[i]);
-        fillPath.lineTo(pt.dx, pt.dy);
-      }
-      fillPath.lineTo(size.width, chartHeight + 10);
-      fillPath.close();
-      canvas.drawPath(fillPath, gradientPaint);
-
-      // Línea principal con sombra
-      final shadowPaint = Paint()
-        ..color = c.withOpacity(0.3)
-        ..strokeWidth = 3
-        ..style = PaintingStyle.stroke
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
-
-      final linePaint = Paint()
-        ..color = c
-        ..strokeWidth = 2.5
-        ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
-
-      final path = Path();
-      for (int i = 0; i < s.length; i++) {
-        final pt = p(i.toDouble(), s[i]);
-        if (i == 0) {
-          path.moveTo(pt.dx, pt.dy);
-        } else {
-          path.lineTo(pt.dx, pt.dy);
-        }
-      }
-
-      canvas.drawPath(path, shadowPaint);
-      canvas.drawPath(path, linePaint);
-
-      // Puntos estilo Apple con anillo exterior
-      for (int i = 0; i < s.length; i++) {
-        final pt = p(i.toDouble(), s[i]);
-        
-        // Sombra del punto
-        final shadowDot = Paint()
-          ..color = c.withOpacity(0.3)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-        canvas.drawCircle(pt, 5, shadowDot);
-
-        // Anillo exterior
-        final outerRing = Paint()
-          ..color = c.withOpacity(0.3)
-          ..style = PaintingStyle.fill;
-        canvas.drawCircle(pt, 6, outerRing);
-
-        // Punto interior blanco
-        final innerDot = Paint()
-          ..color = isDark ? const Color(0xFF1C1C1E) : Colors.white
-          ..style = PaintingStyle.fill;
-        canvas.drawCircle(pt, 4, innerDot);
-
-        // Centro de color
-        final centerDot = Paint()..color = c;
-        canvas.drawCircle(pt, 2.5, centerDot);
-      }
-    }
-
-    drawAppleSeries(a, colorA, true);
-    drawAppleSeries(b, colorB, false);
-
-    // Labels eje X estilo SF Pro
-    final tp = TextPainter(
-      textAlign: TextAlign.center,
-      textDirection: TextDirection.ltr,
-    );
-    for (int i = 0; i < labels.length; i++) {
-      tp.text = TextSpan(
-        text: labels[i],
-        style: TextStyle(
-          color: isDark
-              ? Colors.white.withOpacity(0.6)
-              : Colors.black.withOpacity(0.5),
-          fontSize: 11,
-          fontWeight: FontWeight.w500,
-          letterSpacing: -0.2,
-        ),
-      );
-      tp.layout(minWidth: 1, maxWidth: 80);
-      final x = i * stepX - tp.width / 2;
-      tp.paint(
-        canvas,
-        Offset(x.clamp(0, size.width - tp.width), size.height - 25),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _AppleLineChartPainter oldDelegate) =>
-      oldDelegate.a != a ||
-      oldDelegate.b != b ||
-      oldDelegate.isDark != isDark;
 }

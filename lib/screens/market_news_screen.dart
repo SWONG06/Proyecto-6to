@@ -1,18 +1,62 @@
 // ignore_for_file: file_names
 
 import 'package:flutter/material.dart';
+import '../models/finance_models.dart';
 
 class MarketNewsScreen extends StatefulWidget {
-  const MarketNewsScreen({super.key});
+  final List<FinancialNews>? news;
+  
+  const MarketNewsScreen({super.key, this.news});
 
   @override
   State<MarketNewsScreen> createState() => _MarketNewsScreenState();
 }
 
-class _MarketNewsScreenState extends State<MarketNewsScreen> {
+class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerProviderStateMixin {
   String _selectedCategory = 'Todos';
+  late TabController _tabController;
   
   final List<String> categories = ['Todos', 'Bancos', 'Inversiones', 'Criptos', 'Mercado'];
+  
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+  
+  // Usar los datos del modelo si están disponibles, de lo contrario usar los datos de demostración
+  List<NewsItem> get _newsItems {
+    if (widget.news != null && widget.news!.isNotEmpty) {
+      return widget.news!.map((news) => NewsItem(
+        title: news.title,
+        description: news.summary,
+        fullContent: news.summary,
+        category: news.program,
+        time: _getTimeAgo(news.publishDate),
+        icon: news.program == 'Cresco' ? Icons.trending_up : Icons.eco,
+        color: news.program == 'Cresco' ? Colors.blue : Colors.green,
+      )).toList();
+    }
+    
+    return allNews;
+  }
+  
+  String _getTimeAgo(DateTime date) {
+    final difference = DateTime.now().difference(date);
+    if (difference.inDays > 0) {
+      return '${difference.inDays} días';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} horas';
+    } else {
+      return '${difference.inMinutes} minutos';
+    }
+  }
   
   final List<NewsItem> allNews = [
     NewsItem(
@@ -100,6 +144,35 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Noticias Financieras'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Todos'),
+            Tab(text: 'Cresco'),
+            Tab(text: 'Tree'),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildNewsTab('Todos'),
+          _buildNewsTab('Cresco'),
+          _buildNewsTab('Tree'),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildNewsTab(String program) {
+    final cs = Theme.of(context).colorScheme;
+    final filteredNews = program == 'Todos'
+        ? _newsItems
+        : _newsItems.where((news) => news.category == program).toList();
+    
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
@@ -146,7 +219,9 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No hay noticias en esta categoría',
+                      program == 'Todos'
+                          ? 'No hay noticias disponibles'
+                          : 'No hay noticias del programa $program',
                       style: TextStyle(
                         color: cs.onSurface.withOpacity(0.6),
                         fontSize: 16,
