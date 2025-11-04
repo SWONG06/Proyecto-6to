@@ -31,8 +31,7 @@ class DashboardScreen extends StatelessWidget {
         category: 'Inversiones',
         program: 'Cresco',
         publishedAt: DateTime.now().subtract(const Duration(hours: 3)),
-        imageUrl:
-            'https://images.unsplash.com/photo-1623961983321-d2c1a42f3c4b?w=800',
+        imageUrl: '', // Vacío para evitar errores
       ),
       FinancialNews(
         id: '2',
@@ -44,8 +43,7 @@ class DashboardScreen extends StatelessWidget {
         category: 'Finanzas Personales',
         program: 'Tree',
         publishedAt: DateTime.now().subtract(const Duration(days: 1)),
-        imageUrl:
-            'https://images.unsplash.com/photo-1605902711622-cfb43c4437b5?w=800',
+        imageUrl: '',
       ),
       FinancialNews(
         id: '3',
@@ -57,8 +55,7 @@ class DashboardScreen extends StatelessWidget {
         category: 'Criptos',
         program: 'Cresco',
         publishedAt: DateTime.now().subtract(const Duration(days: 2)),
-        imageUrl:
-            'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800',
+        imageUrl: '',
       ),
     ];
   }
@@ -165,8 +162,8 @@ class DashboardScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (item.imageUrl.isNotEmpty)
-            Image.network(item.imageUrl, height: 180, width: double.infinity, fit: BoxFit.cover),
+          // Placeholder elegante en lugar de cargar imagen
+          _buildNewsImagePlaceholder(context, item, cs),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -205,6 +202,59 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNewsImagePlaceholder(BuildContext context, FinancialNews item, ColorScheme cs) {
+    IconData iconForCategory(String category) {
+      switch (category.toLowerCase()) {
+        case 'inversiones':
+          return Icons.trending_up;
+        case 'criptos':
+          return Icons.currency_bitcoin;
+        case 'finanzas personales':
+          return Icons.wallet;
+        default:
+          return Icons.newspaper;
+      }
+    }
+
+    Color colorForCategory(String category) {
+      switch (category.toLowerCase()) {
+        case 'inversiones':
+          return Colors.blue;
+        case 'criptos':
+          return Colors.orange;
+        case 'finanzas personales':
+          return Colors.green;
+        default:
+          return cs.primary;
+      }
+    }
+
+    final icon = iconForCategory(item.category);
+    final color = colorForCategory(item.category);
+
+    return Container(
+      height: 180,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.3),
+            color.withOpacity(0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          icon,
+          size: 60,
+          color: color.withOpacity(0.8),
+        ),
       ),
     );
   }
