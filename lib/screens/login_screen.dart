@@ -1,9 +1,13 @@
-
-
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key, required Null Function() onLoginSuccess});
+  final Function() onLoginSuccess;
+
+  const LoginScreen({
+    super.key,
+    required this.onLoginSuccess,
+  });
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -54,6 +58,8 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   void _handleLogin() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Por favor completa todos los campos'),
@@ -75,11 +81,32 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
     if (!mounted) return;
 
+    // ✅ GUARDAR DATOS EN SHARED PREFERENCES
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Extraer nombre del email
+    final nameParts = _emailController.text.split('@')[0].split('.');
+    final userName = nameParts.map((part) => 
+      part.isNotEmpty ? part[0].toUpperCase() + part.substring(1) : ''
+    ).join(' ');
+
+    // Guardar información del usuario
+    await prefs.setString('user_email', _emailController.text);
+    await prefs.setString('user_name', userName.isEmpty ? 'Usuario' : userName);
+    await prefs.setString('user_phone', '+34 612 345 678');
+    await prefs.setString('user_company', 'Tech Solutions S.L.');
+    await prefs.setString('user_position', 'Gerente Financiero');
+    await prefs.setBool('is_logged_in', true);
+
+    if (!mounted) return;
+
     setState(() => _isLoading = false);
 
     // Navegar al MainScreen
+    widget.onLoginSuccess();
     Navigator.of(context).pushReplacementNamed('/main');
   }
+
 
   @override
   Widget build(BuildContext context) {

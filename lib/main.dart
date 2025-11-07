@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -36,6 +35,7 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
   ThemeMode _themeMode = ThemeMode.system;
   bool _isAutomaticTheme = false;
   bool _isLoggedIn = false;
+
 
   bool _isDarkModeByTime() {
     final hour = DateTime.now().hour;
@@ -100,6 +100,10 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
           onThemeChanged: _updateThemeMode,
           onAutomaticThemeChanged: _updateAutomaticTheme,
         ),
+        '/profile': (context) => UserProfileScreen(
+          themeMode: _themeMode,
+          onThemeChanged: _updateThemeMode,
+        ),
       },
     );
   }
@@ -162,6 +166,17 @@ class _MainScreenState extends State<MainScreen> {
     setState(() => _currentIndex = index);
   }
 
+  void _navigateToProfile() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => UserProfileScreen(
+          themeMode: widget.themeMode,
+          onThemeChanged: widget.onThemeChanged,
+        ),
+      ),
+    );
+  }
+
   Widget _buildScreen(int index) {
     switch (index) {
       case 0:
@@ -169,17 +184,7 @@ class _MainScreenState extends State<MainScreen> {
           state: _state,
           themeMode: widget.themeMode,
           onThemeChanged: widget.onThemeChanged,
-          onNavigateToProfile: () {
-            if (kDebugMode) {
-              print('Navegando a perfil');
-            }
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Perfil del usuario'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          },
+          onNavigateToProfile: _navigateToProfile,
           notifications: _notifications,
         );
       case 1:
@@ -218,7 +223,7 @@ class _MainScreenState extends State<MainScreen> {
           state: _state,
           themeMode: widget.themeMode,
           onThemeChanged: widget.onThemeChanged,
-          onNavigateToProfile: () {},
+          onNavigateToProfile: _navigateToProfile,
           notifications: _notifications,
         );
     }
