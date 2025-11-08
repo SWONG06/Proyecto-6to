@@ -1,27 +1,31 @@
 // ignore_for_file: file_names
 
 import 'package:flutter/material.dart';
-import '../models/finance_models.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:convert';
+import 'dart:async';
 
 class MarketNewsScreen extends StatefulWidget {
-  final List<FinancialNews>? news;
-  
-  const MarketNewsScreen({super.key, this.news});
+  const MarketNewsScreen({super.key});
 
   @override
   State<MarketNewsScreen> createState() => _MarketNewsScreenState();
 }
 
 class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerProviderStateMixin {
-  String _selectedCategory = 'Todos';
   late TabController _tabController;
+  late Future<List<NewsItem>> _crezcoNews;
+  late Future<List<NewsItem>> _triNews;
   
-  final List<String> categories = ['Todos', 'Bancos', 'Inversiones', 'Criptos', 'Mercado'];
+  static const String apiKey = '2f7109887e404e9a9f0a1a3282a78651';
   
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _crezcoNews = _fetchCrezcoNews();
+    _triNews = _fetchTriNews();
   }
 
   @override
@@ -29,116 +33,75 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
     _tabController.dispose();
     super.dispose();
   }
-  
-  List<NewsItem> get _newsItems {
-    if (widget.news != null && widget.news!.isNotEmpty) {
-      return widget.news!.map((news) => NewsItem(
-        title: news.title,
-        description: news.summary,
-        fullContent: news.summary,
-        category: news.program ?? 'General',
-        time: news.publishDate != null ? _getTimeAgo(news.publishDate!) : 'Reciente',
-        icon: news.program == 'Cresco' ? Icons.trending_up : Icons.eco,
-        color: news.program == 'Cresco' ? Colors.blue : Colors.green,
-      )).toList();
+
+  Future<List<NewsItem>> _fetchCrezcoNews() async {
+    try {
+      final url = 'https://newsapi.org/v2/everything?q=finanzas%20perú&sortBy=publishedAt&language=es&pageSize=10&apiKey=$apiKey';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
+      
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        final articles = (json['articles'] as List? ?? [])
+            .take(10)
+            .map((article) => NewsItem(
+              title: article['title'] ?? 'Sin título',
+              description: article['description'] ?? 'Sin descripción',
+              fullContent: article['content'] ?? article['description'] ?? 'Sin contenido',
+              category: 'Cresco',
+              time: _getTimeAgo(DateTime.parse(article['publishedAt'] ?? DateTime.now().toString())),
+              icon: Icons.trending_up,
+              color: const Color(0xFF2563EB),
+              url: article['url'] ?? '',
+              imageUrl: article['urlToImage'] ?? '',
+            ))
+            .toList();
+        return articles;
+      }
+    } catch (e) {
+      debugPrint('Error: $e');
     }
-    
-    return allNews;
+    return [];
   }
-  
+
+  Future<List<NewsItem>> _fetchTriNews() async {
+    try {
+      final url = 'https://newsapi.org/v2/everything?q=criptomonedas%20bitcoin&sortBy=publishedAt&language=es&pageSize=10&apiKey=$apiKey';
+      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
+      
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        final articles = (json['articles'] as List? ?? [])
+            .take(10)
+            .map((article) => NewsItem(
+              title: article['title'] ?? 'Sin título',
+              description: article['description'] ?? 'Sin descripción',
+              fullContent: article['content'] ?? article['description'] ?? 'Sin contenido',
+              category: 'TRII',
+              time: _getTimeAgo(DateTime.parse(article['publishedAt'] ?? DateTime.now().toString())),
+              icon: Icons.currency_bitcoin,
+              color: const Color(0xFFF59E0B),
+              url: article['url'] ?? '',
+              imageUrl: article['urlToImage'] ?? '',
+            ))
+            .toList();
+        return articles;
+      }
+    } catch (e) {
+      debugPrint('Error: $e');
+    }
+    return [];
+  }
+
   String _getTimeAgo(DateTime date) {
     final difference = DateTime.now().difference(date);
     if (difference.inDays > 0) {
-      return '${difference.inDays} día${difference.inDays > 1 ? 's' : ''}';
+      return '${difference.inDays}d';
     } else if (difference.inHours > 0) {
-      return '${difference.inHours} hora${difference.inHours > 1 ? 's' : ''}';
+      return '${difference.inHours}h';
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} minuto${difference.inMinutes > 1 ? 's' : ''}';
-    } else {
-      return 'Ahora';
+      return '${difference.inMinutes}m';
     }
-  }
-  
-  final List<NewsItem> allNews = [
-    NewsItem(
-      title: 'Banco Central sube tasa de interés al 4.5%',
-      description: 'El Banco Central anunció una subida de 50 puntos base en la tasa de política monetaria...',
-      fullContent: 'El Banco Central anunció una subida de 50 puntos base en la tasa de política monetaria, llevándola del 4.0% al 4.5%. Esta decisión fue tomada en respuesta a las presiones inflacionarias observadas en los últimos meses. Los analistas esperaban esta medida para controlar la inflación y mantener la estabilidad económica. Se espera que esta decisión impacte en las tasas de los créditos y depósitos bancarios en las próximas semanas.',
-      category: 'Bancos',
-      time: '2 horas',
-      icon: Icons.trending_up,
-      color: Colors.blue,
-    ),
-    NewsItem(
-      title: 'S&P 500 alcanza nuevo máximo histórico',
-      description: 'Los índices bursátiles estadounidenses continúan su racha alcista impulsados por ganancias tecnológicas...',
-      fullContent: 'Los índices bursátiles estadounidenses continúan su racha alcista impulsados por ganancias tecnológicas. El S&P 500 alcanzó un nuevo máximo histórico, superando las expectativas de los analistas. Las principales empresas de tecnología como Apple, Microsoft y Google han mostrado resultados excepcionales que han impulsado el mercado. Los inversores mantienen una visión optimista sobre el desempeño económico en los próximos trimestres.',
-      category: 'Inversiones',
-      time: '3 horas',
-      icon: Icons.show_chart,
-      color: Colors.green,
-    ),
-    NewsItem(
-      title: 'Bitcoin supera los \$45,000',
-      description: 'La criptomoneda más popular del mundo alcanza nuevos máximos en medio de una recuperación del mercado...',
-      fullContent: 'La criptomoneda más popular del mundo alcanza nuevos máximos en medio de una recuperación del mercado cripto. Bitcoin ha superado la barrera psicológica de los \$45,000, impulsado por noticias positivas sobre adopción institucional. Se espera que este rally continúe en las próximas semanas si se mantiene el sentimiento positivo en el mercado. Los analistas proyectan que podría alcanzar los \$50,000 antes de fin de año.',
-      category: 'Criptos',
-      time: '4 horas',
-      icon: Icons.currency_bitcoin,
-      color: Colors.orange,
-    ),
-    NewsItem(
-      title: 'Nuevas regulaciones fintech en la UE',
-      description: 'La Unión Europea implementa nuevas medidas de control para empresas de tecnología financiera...',
-      fullContent: 'La Unión Europea implementa nuevas medidas de control para empresas de tecnología financiera. Estas regulaciones buscan proteger a los consumidores y garantizar la estabilidad del sistema financiero. Las empresas fintech deberán cumplir con requisitos más estrictos de capital y transparencia. Se estima que estas medidas entrarán en vigor en el próximo trimestre.',
-      category: 'Bancos',
-      time: '5 horas',
-      icon: Icons.security,
-      color: Colors.purple,
-    ),
-    NewsItem(
-      title: 'Ethereum supera \$2,500 en bull run',
-      description: 'La segunda criptomoneda más grande por capitalización de mercado continúa su ascenso...',
-      fullContent: 'La segunda criptomoneda más grande por capitalización de mercado continúa su ascenso impulsada por la actividad en DeFi. Ethereum ha superado los \$2,500 gracias al optimismo sobre las mejoras de escalabilidad. La red ha procesado un volumen récord de transacciones en las últimas semanas. Los desarrolladores continúan trabajando en mejoras de rendimiento.',
-      category: 'Criptos',
-      time: '6 horas',
-      icon: Icons.currency_bitcoin,
-      color: Colors.indigo,
-    ),
-    NewsItem(
-      title: 'Mercado de oro cae 2.3% esta semana',
-      description: 'El precio del oro retrocede debido al fortalecimiento del dólar en los mercados internacionales...',
-      fullContent: 'El precio del oro retrocede debido al fortalecimiento del dólar en los mercados internacionales. El metal precioso cae 2.3% esta semana afectado por la solidez de la divisa estadounidense. Los inversores han reducido sus posiciones defensivas ante el panorama económico más positivo. Se espera que el oro continúe bajo presión si el dólar mantiene su fortaleza.',
-      category: 'Mercado',
-      time: '7 horas',
-      icon: Icons.monetization_on,
-      color: Colors.amber,
-    ),
-    NewsItem(
-      title: 'Tech stocks en caída, preocupación por tasas',
-      description: 'Los inversores reevalúan posiciones en el sector tecnológico ante expectativas de tasas más altas...',
-      fullContent: 'Los inversores reevalúan posiciones en el sector tecnológico ante expectativas de tasas más altas. Las acciones de tecnología experimenta presión vendedora debido a preocupaciones sobre rentabilidad futura. Un aumento en las tasas de interés afectaría la valoración de estas empresas de alto crecimiento. Los analistas recomiendan cautela pero mantienen una visión de largo plazo positiva.',
-      category: 'Inversiones',
-      time: '8 horas',
-      icon: Icons.trending_down,
-      color: Colors.red,
-    ),
-    NewsItem(
-      title: 'Banco XYZ lanza nueva app de inversión',
-      description: 'La institución financiera ofrece a sus clientes una plataforma mejorada para invertir en bolsa...',
-      fullContent: 'La institución financiera ofrece a sus clientes una plataforma mejorada para invertir en bolsa. La nueva aplicación incluye herramientas avanzados de análisis, alertas personalizadas y acceso a múltiples mercados. Los clientes podrán operaren tiempo real con comisiones reducidas. La app está disponible en iOS y Android desde hoy.',
-      category: 'Bancos',
-      time: '9 horas',
-      icon: Icons.phone_android,
-      color: Colors.cyan,
-    ),
-  ];
-
-  List<NewsItem> get filteredNews {
-    if (_selectedCategory == 'Todos') {
-      return allNews;
-    }
-    return allNews.where((news) => news.category == _selectedCategory).toList();
+    return 'Ahora';
   }
 
   @override
@@ -151,32 +114,27 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
         elevation: 0,
         backgroundColor: cs.surface,
         title: Text(
-          '📰 Noticias Financieras',
+          'Noticias',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.3,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.5,
           ),
         ),
         centerTitle: false,
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Column(
-            children: [
-              TabBar(
-                controller: _tabController,
-                labelColor: cs.primary,
-                unselectedLabelColor: cs.onSurfaceVariant,
-                indicatorColor: cs.primary,
-                indicatorWeight: 3,
-                labelPadding: const EdgeInsets.symmetric(horizontal: 24),
-                tabs: const [
-                  Tab(text: 'Todos'),
-                  Tab(text: 'Cresco'),
-                  Tab(text: 'Tree'),
-                ],
-              ),
-              const SizedBox(height: 8),
+          preferredSize: const Size.fromHeight(50),
+          child: TabBar(
+            controller: _tabController,
+            labelColor: cs.primary,
+            unselectedLabelColor: cs.onSurfaceVariant,
+            indicatorColor: cs.primary,
+            indicatorWeight: 2,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 20),
+            tabs: const [
+              Tab(text: 'Todos'),
+              Tab(text: 'Cresco'),
+              Tab(text: 'TRII'),
             ],
           ),
         ),
@@ -184,120 +142,105 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildNewsTab('Todos'),
-          _buildNewsTab('Cresco'),
-          _buildNewsTab('Tree'),
+          _buildAllNewsTab(),
+          _buildNewsTabFromFuture(_crezcoNews),
+          _buildNewsTabFromFuture(_triNews),
         ],
       ),
     );
   }
-  
-  Widget _buildNewsTab(String program) {
-    final cs = Theme.of(context).colorScheme;
-    final filteredNews = program == 'Todos'
-        ? _newsItems
-        : _newsItems.where((news) => news.category == program).toList();
-    
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: categories.map((category) {
-                  final isSelected = _selectedCategory == category;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() => _selectedCategory = category);
-                      },
-                      label: Text(category),
-                      backgroundColor: cs.surfaceContainerHighest,
-                      selectedColor: cs.primary,
-                      side: BorderSide(
-                        color: isSelected ? cs.primary : cs.outlineVariant.withOpacity(0.3),
-                        width: isSelected ? 2 : 1,
-                      ),
-                      labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : cs.onSurface,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-        ),
 
-        if (filteredNews.isEmpty)
-          SliverToBoxAdapter(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(40),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: cs.primary.withOpacity(0.1),
-                      ),
-                      child: Icon(
-                        Icons.newspaper_rounded,
-                        size: 40,
-                        color: cs.primary.withOpacity(0.5),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      'No hay noticias disponibles',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Intenta con otra categoría',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: cs.onSurfaceVariant.withOpacity(0.6),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          )
-        else
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: _NewsCard(
-                  news: filteredNews[index],
-                  cs: cs,
-                  onTap: () => _navigateToDetail(context, filteredNews[index]),
-                ),
-              ),
-              childCount: filteredNews.length,
+  Widget _buildAllNewsTab() {
+    return FutureBuilder<List<List<NewsItem>>>(
+      future: Future.wait([_crezcoNews, _triNews]),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (!snapshot.hasData || snapshot.hasError) {
+          return _buildEmptyState();
+        }
+
+        final allNews = [...?snapshot.data?[0], ...?snapshot.data?[1]];
+        
+        if (allNews.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        return _buildNewsList(allNews);
+      },
+    );
+  }
+
+  Widget _buildNewsTabFromFuture(Future<List<NewsItem>> future) {
+    return FutureBuilder<List<NewsItem>>(
+      future: future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.isEmpty || snapshot.hasError) {
+          return _buildEmptyState();
+        }
+
+        return _buildNewsList(snapshot.data!);
+      },
+    );
+  }
+
+  Widget _buildNewsList(List<NewsItem> news) {
+    if (news.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    final cs = Theme.of(context).colorScheme;
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      itemCount: news.length,
+      itemBuilder: (context, index) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: NewsCard(
+          news: news[index],
+          cs: cs,
+          onTap: () => _navigateToDetail(context, news[index]),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final cs = Theme.of(context).colorScheme;
+    
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.newspaper_outlined,
+            size: 56,
+            color: cs.onSurfaceVariant.withOpacity(0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Sin noticias disponibles',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: cs.onSurfaceVariant,
             ),
           ),
-        
-        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-      ],
+          const SizedBox(height: 6),
+          Text(
+            'Intenta más tarde',
+            style: TextStyle(
+              fontSize: 14,
+              color: cs.onSurfaceVariant.withOpacity(0.5),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -310,12 +253,13 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
   }
 }
 
-class _NewsCard extends StatelessWidget {
+class NewsCard extends StatelessWidget {
   final NewsItem news;
   final ColorScheme cs;
   final VoidCallback onTap;
 
-  const _NewsCard({
+  const NewsCard({
+    super.key,
     required this.news,
     required this.cs,
     required this.onTap,
@@ -327,24 +271,17 @@ class _NewsCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: cs.surface,
+            borderRadius: BorderRadius.circular(14),
+            color: cs.surfaceContainer,
             border: Border.all(
               color: cs.outlineVariant.withOpacity(0.2),
-              width: 1.5,
+              width: 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
           ),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -352,70 +289,85 @@ class _NewsCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      color: news.color.withOpacity(0.15),
-                      border: Border.all(
-                        color: news.color.withOpacity(0.3),
-                        width: 1,
-                      ),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          news.icon,
-                          size: 16,
-                          color: news.color,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          news.category,
-                          style: TextStyle(
-                            color: news.color,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: cs.primary.withOpacity(0.1),
+                      color: news.color.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: cs.primary.withOpacity(0.2),
+                        color: news.color.withOpacity(0.3),
                         width: 1,
                       ),
                     ),
-                    child: Text(
-                      news.time,
-                      style: TextStyle(
-                        color: cs.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          news.icon,
+                          size: 14,
+                          color: news.color,
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          news.category,
+                          style: TextStyle(
+                            color: news.color,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    news.time,
+                    style: TextStyle(
+                      color: cs.onSurfaceVariant,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
+              
+              if (news.imageUrl.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.network(
+                    news.imageUrl,
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 160,
+                      color: cs.surfaceContainerHighest,
+                    ),
+                  ),
+                ),
+              
+              if (news.imageUrl.isNotEmpty)
+                const SizedBox(height: 10),
               
               Text(
                 news.title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  height: 1.3,
+                  color: cs.onSurface,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              
+              Text(
+                news.description,
+                style: TextStyle(
+                  color: cs.onSurface.withOpacity(0.6),
+                  fontSize: 13,
                   height: 1.3,
                 ),
                 maxLines: 2,
@@ -423,21 +375,8 @@ class _NewsCard extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               
-              Text(
-                news.description,
-                style: TextStyle(
-                  color: cs.onSurface.withOpacity(0.65),
-                  fontSize: 14,
-                  height: 1.4,
-                  fontWeight: FontWeight.w500,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 12),
-              
               Align(
-                alignment: Alignment.bottomRight,
+                alignment: Alignment.centerRight,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -446,15 +385,14 @@ class _NewsCard extends StatelessWidget {
                       style: TextStyle(
                         color: news.color,
                         fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                        letterSpacing: 0.2,
+                        fontSize: 12,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 4),
                     Icon(
                       Icons.arrow_forward_rounded,
                       color: news.color,
-                      size: 16,
+                      size: 14,
                     ),
                   ],
                 ),
@@ -481,145 +419,147 @@ class NewsDetailScreen extends StatelessWidget {
         elevation: 0,
         backgroundColor: cs.surface,
         title: const Text(
-          'Detalle de Noticia',
-          style: TextStyle(fontWeight: FontWeight.w800),
+          'Noticia',
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              decoration: BoxDecoration(
+            if (news.imageUrl.isNotEmpty)
+              ClipRRect(
                 borderRadius: BorderRadius.circular(14),
-                color: news.color.withOpacity(0.15),
-                border: Border.all(
-                  color: news.color.withOpacity(0.3),
-                  width: 1,
+                child: Image.network(
+                  news.imageUrl,
+                  height: 220,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 220,
+                    color: cs.surfaceContainer,
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
                 ),
               ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 10,
+            const SizedBox(height: 20),
+            
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: news.color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    news.icon,
-                    size: 18,
-                    color: news.color,
-                  ),
-                  const SizedBox(width: 8),
+                  Icon(news.icon, size: 16, color: news.color),
+                  const SizedBox(width: 6),
                   Text(
                     news.category,
                     style: TextStyle(
                       color: news.color,
                       fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      letterSpacing: 0.3,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 14),
+            
             Text(
               news.title,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 height: 1.3,
               ),
             ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: cs.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: cs.primary.withOpacity(0.2),
-                  width: 1,
-                ),
-              ),
-              child: Text(
-                news.time,
-                style: TextStyle(
-                  color: cs.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
+            const SizedBox(height: 10),
+            
+            Text(
+              news.time,
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
+                fontSize: 13,
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 22),
+            
             Text(
               news.fullContent,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 color: cs.onSurface.withOpacity(0.8),
-                height: 1.8,
+                height: 1.7,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                color: cs.surface,
-                border: Border.all(
-                  color: cs.outlineVariant.withOpacity(0.2),
-                  width: 1.5,
+            const SizedBox(height: 28),
+            
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: news.url.isEmpty ? null : () => _launchUrl(news.url),
+                icon: const Icon(Icons.open_in_new_rounded, size: 20),
+                label: const Text(
+                  'Ver fuente original',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                  backgroundColor: news.color,
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.info_rounded,
-                    color: cs.primary,
-                    size: 24,
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Categoría',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: cs.onSurfaceVariant.withOpacity(0.7),
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          news.category,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: cs.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _launchUrl(String urlString) async {
+    debugPrint('=== INICIANDO LAUNCH URL ===');
+    debugPrint('URL recibida: "$urlString"');
+    
+    if (urlString.isEmpty) {
+      debugPrint('URL vacía, abortando');
+      return;
+    }
+    
+    try {
+      String url = urlString.trim();
+      debugPrint('URL después de trim: "$url"');
+      
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://$url';
+      }
+      debugPrint('URL final: "$url"');
+      
+      final uri = Uri.parse(url);
+      debugPrint('URI parseada: $uri');
+      
+      // Lanzar directamente sin verificar canLaunchUrl
+      debugPrint('Intentando lanzar URL directamente...');
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+      debugPrint('URL lanzada exitosamente');
+      
+    } catch (e) {
+      debugPrint('ERROR CAPTURADO: $e');
+      debugPrint('Stack trace: ${e.toString()}');
+    }
   }
 }
 
@@ -631,6 +571,8 @@ class NewsItem {
   final String time;
   final IconData icon;
   final Color color;
+  final String url;
+  final String imageUrl;
 
   NewsItem({
     required this.title,
@@ -640,5 +582,7 @@ class NewsItem {
     required this.time,
     required this.icon,
     required this.color,
+    required this.url,
+    required this.imageUrl,
   });
 }
