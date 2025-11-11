@@ -11,8 +11,11 @@ class GeminiChatService {
       throw Exception('❌ API Key de Gemini no encontrada en .env');
     }
 
-    // ✅ Modelo válido para la versión 0.4.6/0.4.7
-    _model = GenerativeModel(model: 'gemini-1.0-pro', apiKey: apiKey);
+    // ✅ Usa un modelo estable y soportado
+    _model = GenerativeModel(
+      model: 'gemini-2.5-flash', // modelo 100% compatible con v1beta
+      apiKey: apiKey,
+    );
   }
 
   Future<String> sendMessage(String userMessage) async {
@@ -20,14 +23,32 @@ class GeminiChatService {
       _chat ??= _model.startChat();
       final response = await _chat!.sendMessage(Content.text(userMessage));
 
-      return response.text ??
-          "🤖 No pude generar una respuesta en este momento.";
-    } on NotInitializedError {
-      _chat = _model.startChat();
-      final response = await _chat!.sendMessage(Content.text(userMessage));
-      return response.text ?? "⚠️ Error al reiniciar la sesión.";
+      final text =
+          response.text ?? "🤖 No pude generar una respuesta en este momento.";
+      return _cleanMarkdown(text);
     } catch (e) {
-      return "⚠️ Error al conectar con Gemini: $e";
+      print('Error detallado: $e');
+      return "⚠️ Error al conectar con Gemini: ${e.toString()}";
     }
+  }
+
+  /// 🧹 Limpia texto con formato Markdown (negritas, cursivas, símbolos)
+  String _cleanMarkdown(String text) {
+    return text
+        // elimina **negrita**
+        .replaceAllMapped(RegExp(r'\*\*(.*?)\*\*'), (m) => m.group(1) ?? '')
+        // elimina *itálica*
+        .replaceAllMapped(RegExp(r'\*(.*?)\*'), (m) => m.group(1) ?? '')
+        // elimina __negritas__ o _itálicas_
+        .replaceAll('_', '')
+        // elimina `código`
+        .replaceAll('`', '')
+        // elimina > citas
+        .replaceAll('>', '')
+        // elimina títulos tipo markdown (#)
+        .replaceAll(RegExp(r'#{1,6} '), '')
+        // normaliza saltos de línea
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
+        .trim();
   }
 }

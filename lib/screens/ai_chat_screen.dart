@@ -13,43 +13,37 @@ class _AIChatScreenState extends State<AIChatScreen> {
   final _scrollController = ScrollController();
   final _messages = <Map<String, String>>[];
   final _gemini = GeminiChatService();
-  bool _loading = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Mensaje inicial automático del asistente
-    Future.delayed(const Duration(milliseconds: 300), () {
-      setState(() {
-        _messages.add({
-          'role': 'ai',
-          'text': '¡Hola! 👋 Soy tu asistente financiero IA. '
-              '¿En qué puedo ayudarte hoy?'
-        });
-      });
+    _addMessage('ai',
+        '¡Hola! 👋 Soy tu asistente financiero de Finabiz. ¿En qué puedo ayudarte hoy?');
+  }
+
+  void _addMessage(String role, String text) {
+    setState(() {
+      _messages.add({'role': role, 'text': text});
     });
   }
 
   Future<void> _sendMessage() async {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
+    final userMessage = _controller.text.trim();
+    if (userMessage.isEmpty) return;
 
-    setState(() {
-      _messages.add({'role': 'user', 'text': text});
-      _controller.clear();
-      _loading = true;
-    });
+    _addMessage('user', userMessage);
+    _controller.clear();
+    setState(() => _isLoading = true);
 
-    final reply = await _gemini.sendMessage(text);
+    final aiResponse = await _gemini.sendMessage(userMessage);
+    _addMessage('ai', aiResponse);
 
-    setState(() {
-      _messages.add({'role': 'ai', 'text': reply});
-      _loading = false;
-    });
+    setState(() => _isLoading = false);
 
     await Future.delayed(const Duration(milliseconds: 200));
     _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent + 100,
+      _scrollController.position.maxScrollExtent + 120,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOut,
     );
@@ -60,37 +54,12 @@ class _AIChatScreenState extends State<AIChatScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text(
-          'Asistente Financiero IA',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        title: const Text('Asistente Financiero 🤖'),
         centerTitle: true,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6B73FF), Color(0xFF000DFF)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: CircleAvatar(
-              backgroundColor: Colors.white.withOpacity(0.3),
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
-          ),
-        ],
+        backgroundColor: Colors.indigoAccent,
       ),
       body: Column(
         children: [
-          // Mensajes
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
@@ -99,20 +68,16 @@ class _AIChatScreenState extends State<AIChatScreen> {
               itemBuilder: (context, index) {
                 final msg = _messages[index];
                 final isUser = msg['role'] == 'user';
-
                 return Align(
-                  alignment:
-                      isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
-                    constraints: const BoxConstraints(maxWidth: 320),
                     margin: const EdgeInsets.symmetric(vertical: 6),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isUser
-                          ? const Color(0xFF003366)
-                          : Colors.grey.shade300,
+                      color: isUser ? Colors.indigoAccent : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(16),
                     ),
+                    constraints: const BoxConstraints(maxWidth: 320),
                     child: Text(
                       msg['text'] ?? '',
                       style: TextStyle(
@@ -126,17 +91,14 @@ class _AIChatScreenState extends State<AIChatScreen> {
               },
             ),
           ),
-
-          if (_loading)
+          if (_isLoading)
             const Padding(
-              padding: EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(12),
               child: CircularProgressIndicator(),
             ),
-
-          // Campo de texto inferior
           Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             child: Row(
               children: [
                 Expanded(
@@ -145,48 +107,23 @@ class _AIChatScreenState extends State<AIChatScreen> {
                     textInputAction: TextInputAction.send,
                     decoration: InputDecoration(
                       hintText: 'Escribe tu mensaje...',
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 16),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(24),
-                        borderSide:
-                            BorderSide(color: Colors.grey.shade400, width: 1),
                       ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(24)),
-                        borderSide: BorderSide(
-                          color: Color(0xFF003366),
-                          width: 2,
-                        ),
-                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                     ),
                     onSubmitted: (_) => _sendMessage(),
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF6B73FF), Color(0xFF000DFF)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Icons.send_rounded, color: Colors.white),
-                    onPressed: _sendMessage,
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.send_rounded, color: Colors.indigoAccent),
+                  onPressed: _sendMessage,
                 ),
               ],
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.white,
-        child: const Icon(Icons.menu, color: Colors.black87),
       ),
     );
   }

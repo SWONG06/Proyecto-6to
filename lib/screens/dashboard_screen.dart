@@ -38,8 +38,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       FinancialNews(
         id: '1',
         title: 'Nuevas tendencias en inversión sostenible',
-        description: 'Descubre cómo las inversiones sostenibles están cambiando el panorama financiero global.',
-        content: 'Las inversiones sostenibles están ganando terreno rápidamente, combinando rentabilidad y responsabilidad social...',
+        description:
+            'Descubre cómo las inversiones sostenibles están cambiando el panorama financiero global.',
+        content:
+            'Las inversiones sostenibles están ganando terreno rápidamente, combinando rentabilidad y responsabilidad social...',
         category: 'Inversiones',
         program: 'Cresco',
         publishedAt: DateTime.now().subtract(const Duration(hours: 3)),
@@ -48,8 +50,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       FinancialNews(
         id: '2',
         title: 'Cómo optimizar tus finanzas personales',
-        description: 'Estrategias efectivas para mejorar tu salud financiera y tus hábitos de ahorro.',
-        content: 'La planificación financiera personal es fundamental para mantener estabilidad y alcanzar metas a largo plazo...',
+        description:
+            'Estrategias efectivas para mejorar tu salud financiera y tus hábitos de ahorro.',
+        content:
+            'La planificación financiera personal es fundamental para mantener estabilidad y alcanzar metas a largo plazo...',
         category: 'Finanzas Personales',
         program: 'Tree',
         publishedAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -58,8 +62,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       FinancialNews(
         id: '3',
         title: 'El futuro de las criptomonedas',
-        description: 'Análisis de las tendencias y predicciones para el mercado cripto global.',
-        content: 'El mercado de criptomonedas continúa evolucionando con nuevas regulaciones y tecnologías emergentes...',
+        description:
+            'Análisis de las tendencias y predicciones para el mercado cripto global.',
+        content:
+            'El mercado de criptomonedas continúa evolucionando con nuevas regulaciones y tecnologías emergentes...',
         category: 'Criptos',
         program: 'Cresco',
         publishedAt: DateTime.now().subtract(const Duration(days: 2)),
@@ -86,7 +92,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: cs.primary,
         elevation: 12,
         shape: const CircleBorder(),
-        child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 28),
+        child:
+            const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 28),
       ),
       body: SafeArea(
         child: Stack(
@@ -97,7 +104,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 10),
-                  // Header Premium
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -106,17 +112,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         children: [
                           Text(
                             "Bienvenido",
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: cs.onBackground.withOpacity(0.6),
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: cs.onBackground.withOpacity(0.6),
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                           Text(
                             "Resumen general",
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: cs.onBackground,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: cs.onBackground,
+                                ),
                           ),
                         ],
                       ),
@@ -140,14 +152,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ],
                           ),
-                          child: Icon(Icons.account_circle_rounded, color: Colors.white, size: 28),
+                          child: const Icon(Icons.account_circle_rounded,
+                              color: Colors.white, size: 28),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Tarjeta Principal Premium
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
@@ -181,12 +192,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Text(
+                              child: const Text(
                                 "Premium",
                                 style: TextStyle(
                                   fontSize: 11,
@@ -201,69 +213,61 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 16),
                         Text(
                           "S/ 3,560.00",
-                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            fontSize: 36,
-                          ),
+                          style:
+                              Theme.of(context).textTheme.headlineLarge?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                    fontSize: 36,
+                                  ),
                         ),
                         const SizedBox(height: 20),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildBalanceMetric("Ingresos", "S/ 4,200.00", Colors.white),
-                            _buildBalanceMetric("Gastos", "S/ 640.00", Colors.white),
+                            _buildBalanceMetric("Ingresos", "S/ 4,200.00",
+                                Colors.white),
+                            _buildBalanceMetric(
+                                "Gastos", "S/ 640.00", Colors.white),
                           ],
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
-                  // Sección Estadísticas
                   Text(
                     "Estadísticas",
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: cs.onBackground,
-                    ),
+                          fontWeight: FontWeight.w800,
+                          color: cs.onBackground,
+                        ),
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
                       Expanded(
-                        child: _buildStatCard(
-                          "Ingresos",
-                          "S/ 4,200.00",
-                          Icons.trending_up_rounded,
-                          Colors.green,
-                          cs,
-                        ),
+                        child: _buildStatCard("Ingresos", "S/ 4,200.00",
+                            Icons.trending_up_rounded, Colors.green, cs),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _buildStatCard(
-                          "Gastos",
-                          "S/ 640.00",
-                          Icons.trending_down_rounded,
-                          Colors.red,
-                          cs,
-                        ),
+                        child: _buildStatCard("Gastos", "S/ 640.00",
+                            Icons.trending_down_rounded, Colors.red, cs),
                       ),
                     ],
                   ),
                   const SizedBox(height: 32),
-                  
-                  // Noticias
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         "📰 Noticias",
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: cs.onBackground,
-                        ),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: cs.onBackground,
+                            ),
                       ),
                       TextButton(
                         onPressed: () {},
@@ -280,9 +284,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(height: 16),
                   Column(
-                    children: news.map((item) => _buildModernNewsCard(context, item, cs)).toList(),
+                    children: news
+                        .map((item) => _buildModernNewsCard(context, item, cs))
+                        .toList(),
                   ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -299,7 +304,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildBalanceMetric(String title, String value, Color textColor) {
+  Widget _buildBalanceMetric(
+      String title, String value, Color textColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -325,7 +331,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color, ColorScheme cs) {
+  Widget _buildStatCard(String title, String value, IconData icon,
+      Color color, ColorScheme cs) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -335,13 +342,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: color.withOpacity(0.2),
           width: 1.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,29 +356,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(height: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: cs.onSurface.withOpacity(0.6),
-            ),
-          ),
+          Text(title,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: cs.onSurface.withOpacity(0.6))),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: cs.onSurface,
-            ),
-          ),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: cs.onSurface)),
         ],
       ),
     );
   }
 
-  Widget _buildModernNewsCard(BuildContext context, FinancialNews item, ColorScheme cs) {
+  Widget _buildModernNewsCard(
+      BuildContext context, FinancialNews item, ColorScheme cs) {
     IconData iconForCategory(String category) {
       switch (category.toLowerCase()) {
         case 'inversiones':
@@ -417,13 +412,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           color: cs.outlineVariant.withOpacity(0.2),
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -443,12 +431,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       height: 56,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [color.withOpacity(0.2), color.withOpacity(0.05)],
+                          colors: [
+                            color.withOpacity(0.2),
+                            color.withOpacity(0.05)
+                          ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+                        border: Border.all(
+                            color: color.withOpacity(0.3), width: 1.5),
                       ),
                       child: Icon(icon, color: color, size: 28),
                     ),
@@ -458,11 +450,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: color.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: color.withOpacity(0.3), width: 0.5),
+                              border: Border.all(
+                                  color: color.withOpacity(0.3), width: 0.5),
                             ),
                             child: Text(
                               item.category.toUpperCase(),
@@ -477,19 +471,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const SizedBox(height: 8),
                           Text(
                             item.title,
-                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                              height: 1.3,
-                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 14,
+                                  height: 1.3,
+                                ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Icon(Icons.arrow_forward_rounded, color: color, size: 20),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -507,22 +502,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      item.program,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface.withOpacity(0.5),
-                      ),
-                    ),
-                    Text(
-                      _formatDate(item.publishedAt),
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: cs.onSurface.withOpacity(0.5),
-                      ),
-                    ),
+                    Text(item.program,
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: cs.onSurface.withOpacity(0.5))),
+                    Text(_formatDate(item.publishedAt),
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            color: cs.onSurface.withOpacity(0.5))),
                   ],
                 ),
               ],
@@ -548,13 +537,14 @@ class BankingAvatarChat extends StatefulWidget {
   State<BankingAvatarChat> createState() => _BankingAvatarChatState();
 }
 
-class _BankingAvatarChatState extends State<BankingAvatarChat> with SingleTickerProviderStateMixin {
+class _BankingAvatarChatState extends State<BankingAvatarChat>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [
     ChatMessage(
-      text: '¡Hola! Soy tu asistente financiero. 💳 ¿En qué puedo ayudarte con tus finanzas?',
-      isUser: false,
-    ),
+        text:
+            '¡Hola! Soy tu asistente financiero 💳 ¿En qué puedo ayudarte hoy?',
+        isUser: false),
   ];
   bool _isLoading = false;
   late AnimationController _animationController;
@@ -564,9 +554,7 @@ class _BankingAvatarChatState extends State<BankingAvatarChat> with SingleTicker
   void initState() {
     super.initState();
     _animationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
+        duration: const Duration(milliseconds: 300), vsync: this);
     _animationController.forward();
   }
 
@@ -580,7 +568,6 @@ class _BankingAvatarChatState extends State<BankingAvatarChat> with SingleTicker
 
   void _sendMessage() async {
     if (_messageController.text.isEmpty) return;
-
     final userMessage = _messageController.text;
     _messageController.clear();
 
@@ -592,13 +579,14 @@ class _BankingAvatarChatState extends State<BankingAvatarChat> with SingleTicker
     _scrollToBottom();
 
     try {
-      final context = '''Eres un asistente financiero amigable para una app de finanzas personales llamada "FinanceCloud".
+      final context =
+          '''Eres un asistente financiero amigable para una app de finanzas personales llamada "FinanceCloud".
 La app tiene las siguientes características principales:
 - Resumen general: Saldo total (S/ 3,560.00), Ingresos (S/ 4,200.00), Gastos (S/ 640.00)
 - Programas: "Cresco" (inversiones sostenibles) y "Tree" (finanzas personales)
 - Secciones: Dashboard, Transacciones, Reportes, Tarjetas, Notificaciones, Configuración
 - Funcionalidades: Seguimiento de gastos, inversiones, análisis de finanzas, noticias financieras
-Responde siempre en español, de forma amigable y profesional. Si el usuario pregunta sobre temas no relacionados con finanzas o la app, redirige amablemente hacia temas financieros.
+Responde siempre en español, de forma amigable y profesional.
 Pregunta del usuario: $userMessage''';
 
       final response = await widget.geminiService.sendMessage(context);
@@ -611,9 +599,8 @@ Pregunta del usuario: $userMessage''';
       _scrollToBottom();
     } catch (e) {
       setState(() {
-        _messages.add(
-          ChatMessage(text: '⚠️ Error al conectar: ${e.toString()}', isUser: false),
-        );
+        _messages.add(ChatMessage(
+            text: '⚠️ Error al conectar: ${e.toString()}', isUser: false));
         _isLoading = false;
       });
     }
@@ -634,11 +621,10 @@ Pregunta del usuario: $userMessage''';
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-
     return SlideTransition(
-      position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero).animate(
-        CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-      ),
+      position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+          .animate(
+              CurvedAnimation(parent: _animationController, curve: Curves.easeOut)),
       child: Container(
         decoration: BoxDecoration(
           color: cs.surface,
@@ -663,36 +649,26 @@ Pregunta del usuario: $userMessage''';
                     height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [cs.primary, cs.primary.withBlue(220)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: cs.primary.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      gradient:
+                          LinearGradient(colors: [cs.primary, cs.primary.withBlue(220)]),
                     ),
-                    child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 22),
+                    child: const Icon(Icons.smart_toy_rounded,
+                        color: Colors.white, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Asistente Financiero',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        'Listo para ayudarte',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+                      Text('Asistente Financiero',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800)),
+                      Text('Listo para ayudarte',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: cs.onSurfaceVariant)),
                     ],
                   ),
                   const Spacer(),
@@ -703,7 +679,6 @@ Pregunta del usuario: $userMessage''';
                 ],
               ),
             ),
-            const Divider(height: 1),
             Flexible(
               child: ListView.builder(
                 controller: _scrollController,
@@ -712,34 +687,31 @@ Pregunta del usuario: $userMessage''';
                 itemBuilder: (context, index) {
                   final message = _messages[index];
                   return Align(
-                    alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+                    alignment: message.isUser
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       decoration: BoxDecoration(
                         gradient: message.isUser
-                            ? LinearGradient(
-                          colors: [cs.primary, cs.primary.withBlue(220)],
-                        )
+                            ? LinearGradient(colors: [
+                                cs.primary,
+                                cs.primary.withBlue(220)
+                              ])
                             : null,
-                        color: !message.isUser ? cs.surfaceContainerHighest : null,
+                        color: !message.isUser
+                            ? cs.surfaceContainerHighest
+                            : null,
                         borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: (message.isUser ? cs.primary : Colors.black).withOpacity(0.08),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
                       ),
                       child: Text(
                         message.text,
                         style: TextStyle(
-                          color: message.isUser ? Colors.white : cs.onSurface,
-                          fontSize: 14,
-                          height: 1.4,
-                          fontWeight: FontWeight.w500,
-                        ),
+                            color:
+                                message.isUser ? Colors.white : cs.onSurface,
+                            fontSize: 14),
                       ),
                     ),
                   );
@@ -755,19 +727,12 @@ Pregunta del usuario: $userMessage''';
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation(cs.primary),
-                      ),
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation(cs.primary)),
                     ),
                     const SizedBox(width: 10),
-                    Text(
-                      'Pensando...',
-                      style: TextStyle(
-                        color: cs.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
+                    Text('Pensando...',
+                        style: TextStyle(color: cs.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -781,21 +746,13 @@ Pregunta del usuario: $userMessage''';
                       enabled: !_isLoading,
                       decoration: InputDecoration(
                         hintText: 'Pregunta sobre tus finanzas...',
-                        hintStyle: TextStyle(
-                          color: cs.onSurfaceVariant.withOpacity(0.5),
-                          fontWeight: FontWeight.w500,
-                        ),
-                        prefixIcon: Padding(
-                          padding: const EdgeInsets.only(left: 12, right: 8),
-                          child: Icon(Icons.edit_rounded, color: cs.primary, size: 20),
-                        ),
+                        prefixIcon: Icon(Icons.edit_rounded,
+                            color: cs.primary, size: 20),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
+                            borderRadius: BorderRadius.circular(24),
+                            borderSide: BorderSide.none),
                         filled: true,
                         fillColor: cs.surfaceContainerHighest,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                       onSubmitted: (_) => _sendMessage(),
                     ),
@@ -804,13 +761,9 @@ Pregunta del usuario: $userMessage''';
                   FloatingActionButton(
                     mini: true,
                     backgroundColor: cs.primary,
-                    elevation: 6,
                     onPressed: _isLoading ? null : _sendMessage,
-                    child: Icon(
-                      Icons.send_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    child: const Icon(Icons.send_rounded,
+                        color: Colors.white, size: 18),
                   ),
                 ],
               ),
@@ -825,6 +778,5 @@ Pregunta del usuario: $userMessage''';
 class ChatMessage {
   final String text;
   final bool isUser;
-
   ChatMessage({required this.text, required this.isUser});
 }
