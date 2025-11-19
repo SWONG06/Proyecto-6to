@@ -2,16 +2,17 @@ import 'package:flutter/material.dart';
 
 class SettingsScreen extends StatefulWidget {
   final ThemeMode themeMode;
-  final void Function(bool isDark) onThemeChanged;
-  final void Function(bool isAutomatic) onAutomaticThemeChanged;
   final bool isAutomaticTheme;
+  final ValueChanged<bool> onThemeChanged;
+  final ValueChanged<bool> onAutomaticThemeChanged;
+  final VoidCallback onLogout;  // ← AÑADE ESTO
 
-  const SettingsScreen({
-    super.key,
+  const SettingsScreen({super.key, 
     required this.themeMode,
+    required this.isAutomaticTheme,
     required this.onThemeChanged,
     required this.onAutomaticThemeChanged,
-    required this.isAutomaticTheme,
+    required this.onLogout,  // ← AÑADE ESTO
   });
 
   @override
@@ -241,8 +242,8 @@ class _SettingsScreenState extends State<SettingsScreen>
                         child: InkWell(
                           onTap: () => Navigator.pop(context),
                           borderRadius: BorderRadius.circular(14),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 14),
                             child: Text(
                               'Cerrar',
                               textAlign: TextAlign.center,
@@ -361,7 +362,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       appBar: AppBar(
         elevation: 0,
         backgroundColor: cs.surface,
-        title: Text(
+        title: const Text(
           'Configuración',
           style: TextStyle(
             fontSize: 20,
@@ -430,7 +431,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     size: 22,
                   ),
                 ),
-                title: Text(
+                title: const Text(
                   'Modo automático',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
@@ -589,7 +590,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     size: 22,
                   ),
                 ),
-                title: Text(
+                title: const Text(
                   'Habilitar notificaciones',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
@@ -661,7 +662,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     size: 22,
                   ),
                 ),
-                title: Text(
+                title: const Text(
                   'Moneda',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
@@ -746,7 +747,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     size: 22,
                   ),
                 ),
-                title: Text(
+                title: const Text(
                   'Versión',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
@@ -807,7 +808,7 @@ class _SettingsScreenState extends State<SettingsScreen>
                     size: 22,
                   ),
                 ),
-                title: Text(
+                title: const Text(
                   'Acerca de',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,

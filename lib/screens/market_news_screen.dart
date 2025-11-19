@@ -36,7 +36,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
 
   Future<List<NewsItem>> _fetchCrezcoNews() async {
     try {
-      final url = 'https://newsapi.org/v2/everything?q=finanzas%20perú&sortBy=publishedAt&language=es&pageSize=10&apiKey=$apiKey';
+      const url = 'https://newsapi.org/v2/everything?q=finanzas%20perú&sortBy=publishedAt&language=es&pageSize=10&apiKey=$apiKey';
       final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
       
       if (response.statusCode == 200) {
@@ -65,7 +65,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
 
   Future<List<NewsItem>> _fetchTriNews() async {
     try {
-      final url = 'https://newsapi.org/v2/everything?q=criptomonedas%20bitcoin&sortBy=publishedAt&language=es&pageSize=10&apiKey=$apiKey';
+      const url = 'https://newsapi.org/v2/everything?q=criptomonedas%20bitcoin&sortBy=publishedAt&language=es&pageSize=10&apiKey=$apiKey';
       final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 15));
       
       if (response.statusCode == 200) {
@@ -113,7 +113,7 @@ class _MarketNewsScreenState extends State<MarketNewsScreen> with SingleTickerPr
       appBar: AppBar(
         elevation: 0,
         backgroundColor: cs.surface,
-        title: Text(
+        title: const Text(
           'Noticias',
           style: TextStyle(
             fontSize: 24,

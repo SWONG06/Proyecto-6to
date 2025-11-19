@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'utils/theme.dart';
 import 'models/finance_models.dart';
 import 'screens/dashboard_screen.dart';
@@ -12,8 +13,10 @@ import 'screens/settings_screen.dart';
 import 'screens/market_news_screen.dart';
 import 'screens/notification_icon_button.dart';
 import 'screens/login_screen.dart';
+import 'screens/register_screen.dart'; // Ensure this file contains the RegisterScreen class definition
 import 'screens/user_profile_screen.dart';
 import 'state/finance_app_state.dart';
+import 'services/api_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,7 +38,36 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
   ThemeMode _themeMode = ThemeMode.system;
   bool _isAutomaticTheme = false;
   bool _isLoggedIn = false;
+  bool _isCheckingAuth = true;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthStatus();
+  }
+
+  Future<void> _checkAuthStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    
+    if (isLoggedIn) {
+      // Cargar datos del usuario en ApiService
+      final userId = prefs.getString('user_id');
+      final userName = prefs.getString('user_name');
+      final userEmail = prefs.getString('user_email');
+      
+      if (userId != null) {
+        ApiService.userId = int.tryParse(userId);
+        ApiService.userName = userName;
+        ApiService.userEmail = userEmail;
+      }
+    }
+
+    setState(() {
+      _isLoggedIn = isLoggedIn;
+      _isCheckingAuth = false;
+    });
+  }
 
   bool _isDarkModeByTime() {
     final hour = DateTime.now().hour;
@@ -58,10 +90,32 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
     });
   }
 
+  void _handleLogout() {
+    setState(() {
+      _isLoggedIn = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingAuth) {
+      return MaterialApp(
+        title: 'Finabiz',
+        debugShowCheckedModeBanner: false,
+        theme: buildTheme().copyWith(useMaterial3: true),
+        darkTheme: buildDarkTheme().copyWith(useMaterial3: true),
+        home: Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(
+              color: buildTheme().primaryColor,
+            ),
+          ),
+        ),
+      );
+    }
+
     return MaterialApp(
-      title: 'FinanceCloud',
+      title: 'Finabiz',
       debugShowCheckedModeBanner: false,
       theme: buildTheme().copyWith(useMaterial3: true),
       darkTheme: buildDarkTheme().copyWith(useMaterial3: true),
@@ -81,6 +135,7 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
               isAutomaticTheme: _isAutomaticTheme,
               onThemeChanged: _updateThemeMode,
               onAutomaticThemeChanged: _updateAutomaticTheme,
+              onLogout: _handleLogout,
             )
           : LoginScreen(
               onLoginSuccess: () {
@@ -90,8 +145,13 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
       routes: {
         '/login': (context) => LoginScreen(
           onLoginSuccess: () {
-            Navigator.of(context).pushReplacementNamed('/main');
             setState(() => _isLoggedIn = true);
+            Navigator.of(context).pushReplacementNamed('/main');
+          },
+        ),
+        '/register': (context) => RegisterScreen(
+          onRegisterSuccess: () {
+            Navigator.of(context).pushReplacementNamed('/login');
           },
         ),
         '/main': (context) => MainScreen(
@@ -99,6 +159,7 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
           isAutomaticTheme: _isAutomaticTheme,
           onThemeChanged: _updateThemeMode,
           onAutomaticThemeChanged: _updateAutomaticTheme,
+          onLogout: _handleLogout,
         ),
         '/profile': (context) => UserProfileScreen(
           themeMode: _themeMode,
@@ -114,6 +175,7 @@ class MainScreen extends StatefulWidget {
   final bool isAutomaticTheme;
   final ValueChanged<bool> onThemeChanged;
   final ValueChanged<bool> onAutomaticThemeChanged;
+  final VoidCallback onLogout;
 
   const MainScreen({
     super.key,
@@ -121,6 +183,7 @@ class MainScreen extends StatefulWidget {
     required this.isAutomaticTheme,
     required this.onThemeChanged,
     required this.onAutomaticThemeChanged,
+    required this.onLogout,
   });
 
   @override
@@ -177,6 +240,19 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  void _handleLogout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_logged_in', false);
+    await prefs.clear();
+    
+    await ApiService.logout();
+    
+    if (mounted) {
+      widget.onLogout();
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
+
   Widget _buildScreen(int index) {
     switch (index) {
       case 0:
@@ -217,6 +293,7 @@ class _MainScreenState extends State<MainScreen> {
           isAutomaticTheme: widget.isAutomaticTheme,
           onThemeChanged: widget.onThemeChanged,
           onAutomaticThemeChanged: widget.onAutomaticThemeChanged,
+          onLogout: _handleLogout,
         );
       default:
         return DashboardScreen(
@@ -246,7 +323,7 @@ class _MainScreenState extends State<MainScreen> {
     String getCurrentTitle() {
       final item = menuItems.firstWhere(
         (item) => item['index'] == _currentIndex,
-        orElse: () => {'label': 'FinanceCloud'},
+        orElse: () => {'label': 'Finabiz'},
       );
       return item['label'];
     }

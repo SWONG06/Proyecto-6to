@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:financecloud/models/financial_news.dart';
-import 'package:financecloud/services/gemini_chat_service.dart';
 import 'package:intl/intl.dart';
-
+import 'package:proyecto_6to/models/financial_news.dart';
+import 'package:proyecto_6to/services/gemini_chat_service.dart';
+import 'package:proyecto_6to/state/finance_app_state.dart';
 class DashboardScreen extends StatefulWidget {
   final dynamic state;
   final ThemeMode themeMode;
@@ -43,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         category: 'Inversiones',
         program: 'Cresco',
         publishedAt: DateTime.now().subtract(const Duration(hours: 3)),
-        imageUrl: '',
+        imageUrl: '', source: '', url: '',
       ),
       FinancialNews(
         id: '2',
@@ -53,7 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         category: 'Finanzas Personales',
         program: 'Tree',
         publishedAt: DateTime.now().subtract(const Duration(days: 1)),
-        imageUrl: '',
+        imageUrl: '', source: '', url: '',
       ),
       FinancialNews(
         id: '3',
@@ -63,7 +63,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         category: 'Criptos',
         program: 'Cresco',
         publishedAt: DateTime.now().subtract(const Duration(days: 2)),
-        imageUrl: '',
+        imageUrl: '', source: '', url: '',
       ),
     ];
   }
@@ -140,7 +140,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ],
                           ),
-                          child: Icon(Icons.account_circle_rounded, color: Colors.white, size: 28),
+                          child: const Icon(Icons.account_circle_rounded, color: Colors.white, size: 28),
                         ),
                       ),
                     ],
@@ -186,7 +186,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Text(
+                              child: const Text(
                                 "Premium",
                                 style: TextStyle(
                                   fontSize: 11,
@@ -601,7 +601,7 @@ La app tiene las siguientes características principales:
 Responde siempre en español, de forma amigable y profesional. Si el usuario pregunta sobre temas no relacionados con finanzas o la app, redirige amablemente hacia temas financieros.
 Pregunta del usuario: $userMessage''';
 
-      final response = await widget.geminiService.sendMessage(context);
+      final response = await GeminiChatService.sendMessage(context);
 
       setState(() {
         _messages.add(ChatMessage(text: response, isUser: false));
@@ -806,7 +806,7 @@ Pregunta del usuario: $userMessage''';
                     backgroundColor: cs.primary,
                     elevation: 6,
                     onPressed: _isLoading ? null : _sendMessage,
-                    child: Icon(
+                    child: const Icon(
                       Icons.send_rounded,
                       color: Colors.white,
                       size: 18,

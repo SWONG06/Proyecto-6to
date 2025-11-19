@@ -177,7 +177,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             icon: Icon(Icons.arrow_back_rounded, color: cs.onSurface),
             onPressed: () => Navigator.pop(context),
           ),
-          title: Text(
+          title: const Text(
             'Mi Perfil',
             style: TextStyle(
               fontSize: 20,
@@ -210,7 +210,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             }
           },
         ),
-        title: Text(
+        title: const Text(
           'Mi Perfil',
           style: TextStyle(
             fontSize: 20,
@@ -288,7 +288,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 color: Colors.white.withOpacity(0.3),
                               ),
                             ),
-                            focusedBorder: UnderlineInputBorder(
+                            focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white,
                                 width: 2,
@@ -321,7 +321,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 color: Colors.white.withOpacity(0.3),
                               ),
                             ),
-                            focusedBorder: UnderlineInputBorder(
+                            focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white,
                                 width: 2,
@@ -353,7 +353,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                                 color: Colors.white.withOpacity(0.3),
                               ),
                             ),
-                            focusedBorder: UnderlineInputBorder(
+                            focusedBorder: const UnderlineInputBorder(
                               borderSide: BorderSide(
                                 color: Colors.white,
                                 width: 2,
@@ -561,17 +561,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       setState(() => _isEditing = true);
                     },
                     borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.edit_rounded,
                             color: Colors.white,
                             size: 20,
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             'Editar Perfil',
                             style: TextStyle(
@@ -693,17 +693,17 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   child: InkWell(
                     onTap: _saveChanges,
                     borderRadius: BorderRadius.circular(16),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.check_rounded,
                             color: Colors.white,
                             size: 20,
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             'Guardar Cambios',
                             style: TextStyle(

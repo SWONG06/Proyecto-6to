@@ -1,33 +1,35 @@
-import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class GeminiChatService {
-  late final GenerativeModel _model;
-  ChatSession? _chat;
+  static const String apiKey = 'YOUR_GEMINI_API_KEY';
+  static const String baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
-  GeminiChatService() {
-    final apiKey = dotenv.env['GEMINI_API_KEY'];
-    if (apiKey == null || apiKey.isEmpty) {
-      throw Exception('❌ API Key de Gemini no encontrada en .env');
-    }
-
-    // ✅ Modelo válido para la versión 0.4.6/0.4.7
-    _model = GenerativeModel(model: 'gemini-1.0-pro', apiKey: apiKey);
-  }
-
-  Future<String> sendMessage(String userMessage) async {
+  static Future<String> sendMessage(String message) async {
     try {
-      _chat ??= _model.startChat();
-      final response = await _chat!.sendMessage(Content.text(userMessage));
+      final response = await http.post(
+        Uri.parse('$baseUrl?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'contents': [
+            {
+              'parts': [
+                {'text': message}
+              ]
+            }
+          ]
+        }),
+      );
 
-      return response.text ??
-          "🤖 No pude generar una respuesta en este momento.";
-    } on NotInitializedError {
-      _chat = _model.startChat();
-      final response = await _chat!.sendMessage(Content.text(userMessage));
-      return response.text ?? "⚠️ Error al reiniciar la sesión.";
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final content = data['candidates'][0]['content']['parts'][0]['text'];
+        return content;
+      } else {
+        return 'Error al procesar tu solicitud';
+      }
     } catch (e) {
-      return "⚠️ Error al conectar con Gemini: $e";
+      return 'Error de conexión: $e';
     }
   }
 }

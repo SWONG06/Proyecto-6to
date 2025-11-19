@@ -1,4 +1,5 @@
-import 'package:financecloud/screens/add_transaction_screen.dart';
+// ignore: depend_on_referenced_packages
+import '/screens/add_transaction_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart';
 import '../utils/formatters.dart';

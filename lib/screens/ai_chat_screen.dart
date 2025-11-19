@@ -12,7 +12,6 @@ class _AIChatScreenState extends State<AIChatScreen> {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   final _messages = <Map<String, String>>[];
-  final _gemini = GeminiChatService();
   bool _loading = false;
 
   @override
@@ -40,7 +39,7 @@ class _AIChatScreenState extends State<AIChatScreen> {
       _loading = true;
     });
 
-    final reply = await _gemini.sendMessage(text);
+    final reply = await GeminiChatService.sendMessage(text);
 
     setState(() {
       _messages.add({'role': 'ai', 'text': reply});

@@ -18,13 +18,13 @@ ThemeData buildTheme() {
       headlineSmall: TextStyle(fontWeight: FontWeight.w700),
       titleMedium: TextStyle(fontWeight: FontWeight.w600),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: const CardThemeData(
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
@@ -56,13 +56,13 @@ ThemeData buildDarkTheme() {
       headlineSmall: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
       titleMedium: TextStyle(fontWeight: FontWeight.w600, color: Colors.white70),
     ),
-    cardTheme: CardThemeData(
+    cardTheme: const CardThemeData(
       elevation: 0,
-      color: const Color(0xFF1E1E1E),
+      color: Color(0xFF1E1E1E),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,

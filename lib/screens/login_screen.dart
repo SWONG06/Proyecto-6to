@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:proyecto_6to/services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function() onLoginSuccess;
@@ -19,10 +20,11 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   late Animation<double> _fadeAnimation;
   late Animation<double> _scaleAnimation;
 
-  final _emailController = TextEditingController();
+  final _correoController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -45,25 +47,72 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
     _fadeController.forward();
     _scaleController.forward();
+    _verificarConexion();
   }
 
   @override
   void dispose() {
     _fadeController.dispose();
     _scaleController.dispose();
-    _emailController.dispose();
+    _correoController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  void _verificarConexion() async {
+    final result = await ApiService.healthCheck();
+    if (!result['success']) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'No hay conexión con el servidor';
+        });
+      }
+    }
+  }
+
   void _handleLogin() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+    if (_correoController.text.isEmpty || _passwordController.text.isEmpty) {
       if (!mounted) return;
-      
+
+      setState(() {
+        _errorMessage = 'Por favor completa todos los campos';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    // Llamar a la API de Django
+    final result = await ApiService.loginUsuario(
+      _correoController.text.trim(),
+      _passwordController.text, correo: '',
+    );
+
+    if (!mounted) return;
+
+    if (result['success']) {
+      // ✅ GUARDAR DATOS EN SHARED PREFERENCES
+      final prefs = await SharedPreferences.getInstance();
+      final userData = result['data'];
+
+      await prefs.setString('user_id', userData['id'].toString());
+      await prefs.setString('user_email', userData['correo']);
+      await prefs.setString('user_name', userData['nombre']);
+      await prefs.setString('user_foto', userData['foto_perfil'] ?? '');
+      await prefs.setBool('is_logged_in', true);
+
+      if (!mounted) return;
+
+      setState(() => _isLoading = false);
+
+      // Mostrar snackbar de bienvenida
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Por favor completa todos los campos'),
-          backgroundColor: Colors.red,
+          content: Text('¡Bienvenido ${userData['nombre']}!'),
+          backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
           shape: RoundedRectangleBorder(
@@ -71,42 +120,17 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
           ),
         ),
       );
-      return;
+
+      // Navegar al MainScreen
+      widget.onLoginSuccess();
+      Navigator.of(context).pushReplacementNamed('/main');
+    } else {
+      setState(() {
+        _isLoading = false;
+        _errorMessage = result['error'] ?? 'Error desconocido al iniciar sesión';
+      });
     }
-
-    setState(() => _isLoading = true);
-
-    // Simular delay de login
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-
-    // ✅ GUARDAR DATOS EN SHARED PREFERENCES
-    final prefs = await SharedPreferences.getInstance();
-    
-    // Extraer nombre del email
-    final nameParts = _emailController.text.split('@')[0].split('.');
-    final userName = nameParts.map((part) => 
-      part.isNotEmpty ? part[0].toUpperCase() + part.substring(1) : ''
-    ).join(' ');
-
-    // Guardar información del usuario
-    await prefs.setString('user_email', _emailController.text);
-    await prefs.setString('user_name', userName.isEmpty ? 'Usuario' : userName);
-    await prefs.setString('user_phone', '+34 612 345 678');
-    await prefs.setString('user_company', 'Tech Solutions S.L.');
-    await prefs.setString('user_position', 'Gerente Financiero');
-    await prefs.setBool('is_logged_in', true);
-
-    if (!mounted) return;
-
-    setState(() => _isLoading = false);
-
-    // Navegar al MainScreen
-    widget.onLoginSuccess();
-    Navigator.of(context).pushReplacementNamed('/main');
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +184,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
                   // Título
                   Text(
-                    'FinanceCloud',
+                    'Finabiz',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                       fontSize: 32,
@@ -178,6 +202,37 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                     ),
                   ),
                   const SizedBox(height: 48),
+
+                  // Mensaje de error
+                  if (_errorMessage != null)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade100,
+                        border: Border.all(color: Colors.red),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.error_rounded,
+                            color: Colors.red.shade900,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                color: Colors.red.shade900,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                   // Email Field
                   Text(
@@ -207,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                       ],
                     ),
                     child: TextField(
-                      controller: _emailController,
+                      controller: _correoController,
                       keyboardType: TextInputType.emailAddress,
                       enabled: !_isLoading,
                       decoration: InputDecoration(
@@ -352,12 +407,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               if (_isLoading) ...[
-                                SizedBox(
+                                const SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
-                                    valueColor: const AlwaysStoppedAnimation<Color>(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
                                       Colors.white,
                                     ),
                                   ),
@@ -366,7 +421,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                               ],
                               Text(
                                 _isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w800,
                                   color: Colors.white,
@@ -394,7 +449,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         ),
                       ),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/register');
+                        },
                         child: Text(
                           'Regístrate aquí',
                           style: TextStyle(
@@ -415,5 +472,11 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         ),
       ),
     );
+  }
+}
+
+extension on bool {
+  bool operator [](String other) {
+    throw UnimplementedError('operator [] is not implemented');
   }
 }

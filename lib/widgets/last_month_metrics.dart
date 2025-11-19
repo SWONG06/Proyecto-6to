@@ -2,7 +2,8 @@
 
 import 'dart:core';
 
-import 'package:financecloud/state/finance_app_state.dart';
+// ignore: depend_on_referenced_packages
+import '/state/finance_app_state.dart';
 import 'package:flutter/material.dart';
 import '../models/finance_models.dart';
 import '../utils/formatters.dart';

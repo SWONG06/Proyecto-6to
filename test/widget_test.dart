@@ -36,7 +36,7 @@ void main() {
                 ],
               ),
               bottomNavigationBar: NavigationBar(
-                destinations: [
+                destinations: const [
                   NavigationDestination(
                     icon: Icon(Icons.home_outlined),
                     label: 'Inicio',

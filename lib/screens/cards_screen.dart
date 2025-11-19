@@ -1,9 +1,11 @@
 // ignore_for_file: unnecessary_cast
 
-import 'package:financecloud/screens/add_transaction_screen.dart';
-import 'package:financecloud/widgets/last_month_metrics.dart' show formatCurrency;
+// ignore: depend_on_referenced_packages
+import '/screens/add_transaction_screen.dart';
+import '/widgets/last_month_metrics.dart' show formatCurrency;
 import 'package:flutter/material.dart' as material;
 import 'package:flutter/material.dart';
+import 'package:proyecto_6to/widgets/last_month_metrics.dart';
 import '../models/finance_models.dart' as models;
 import '../utils/formatters.dart';
 

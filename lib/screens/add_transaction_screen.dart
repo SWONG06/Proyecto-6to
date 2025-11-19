@@ -164,10 +164,10 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                 ),
                 padding: const EdgeInsets.all(6),
                 child: SegmentedButton<TxType>(
-                  segments: [
+                  segments: const [
                     ButtonSegment(
                       value: TxType.expense,
-                      icon: const Icon(Icons.arrow_downward_rounded, size: 20),
+                      icon: Icon(Icons.arrow_downward_rounded, size: 20),
                       label: Text(
                         'Gasto',
                         style: TextStyle(
@@ -179,7 +179,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                     ),
                     ButtonSegment(
                       value: TxType.income,
-                      icon: const Icon(Icons.arrow_upward_rounded, size: 20),
+                      icon: Icon(Icons.arrow_upward_rounded, size: 20),
                       label: Text(
                         'Ingreso',
                         style: TextStyle(
@@ -284,20 +284,20 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                   child: InkWell(
                     onTap: _submit,
                     borderRadius: BorderRadius.circular(14),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(
                         vertical: 16,
                         horizontal: 24,
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.check_circle_rounded,
                             color: Colors.white,
                             size: 24,
                           ),
-                          const SizedBox(width: 12),
+                          SizedBox(width: 12),
                           Text(
                             'Guardar Transacción',
                             style: TextStyle(
