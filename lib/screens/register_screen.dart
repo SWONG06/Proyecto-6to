@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:proyecto_6to/services/api_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   final Function() onRegisterSuccess;
@@ -56,30 +55,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _errorMessage = null;
     });
 
-    final result = await ApiService.registrarUsuario(
-      _nombreController.text.trim(),
-      _nombreController.text.trim(),
-      _correoController.text.trim(),
-      _passwordController.text,
-      _confirmPasswordController.text,
-    );
+    // Simular registro local
+    await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
 
-    if (result['success']) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('¡Registro exitoso! Por favor inicia sesión'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
-    } else {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = result['error'] ?? 'Error al registrar';
-      });
-    }
+    // ✅ GUARDAR DATOS EN SHARED PREFERENCES
+    final prefs = await SharedPreferences.getInstance();
+    
+    await prefs.setString('user_id', '1');
+    await prefs.setString('user_name', _nombreController.text.trim());
+    await prefs.setString('user_email', _correoController.text.trim());
+    await prefs.setString('user_foto', '');
+    await prefs.setBool('is_logged_in', true);
+
+    if (!mounted) return;
+
+    setState(() => _isLoading = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('¡Registro exitoso! Por favor inicia sesión'),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    onRegisterSuccess();
+    Navigator.pop(context);
   }
 
   @override
@@ -184,4 +186,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+  
+  void onRegisterSuccess() {}
 }

@@ -13,10 +13,9 @@ import 'screens/settings_screen.dart';
 import 'screens/market_news_screen.dart';
 import 'screens/notification_icon_button.dart';
 import 'screens/login_screen.dart';
-import 'screens/register_screen.dart'; // Ensure this file contains the RegisterScreen class definition
+import 'screens/register_screen.dart';
 import 'screens/user_profile_screen.dart';
 import 'state/finance_app_state.dart';
-import 'services/api_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,19 +49,6 @@ class _FinanceCloudAppState extends State<FinanceCloudApp> {
     final prefs = await SharedPreferences.getInstance();
     final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
     
-    if (isLoggedIn) {
-      // Cargar datos del usuario en ApiService
-      final userId = prefs.getString('user_id');
-      final userName = prefs.getString('user_name');
-      final userEmail = prefs.getString('user_email');
-      
-      if (userId != null) {
-        ApiService.userId = int.tryParse(userId);
-        ApiService.userName = userName;
-        ApiService.userEmail = userEmail;
-      }
-    }
-
     setState(() {
       _isLoggedIn = isLoggedIn;
       _isCheckingAuth = false;
@@ -244,8 +230,6 @@ class _MainScreenState extends State<MainScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_logged_in', false);
     await prefs.clear();
-    
-    await ApiService.logout();
     
     if (mounted) {
       widget.onLogout();

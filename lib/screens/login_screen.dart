@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:proyecto_6to/services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function() onLoginSuccess;
@@ -47,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
     _fadeController.forward();
     _scaleController.forward();
-    _verificarConexion();
   }
 
   @override
@@ -57,17 +55,6 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     _correoController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _verificarConexion() async {
-    final result = await ApiService.healthCheck();
-    if (!result['success']) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = 'No hay conexión con el servidor';
-        });
-      }
-    }
   }
 
   void _handleLogin() async {
@@ -85,51 +72,40 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       _errorMessage = null;
     });
 
-    // Llamar a la API de Django
-    final result = await ApiService.loginUsuario(
-      _correoController.text.trim(),
-      _passwordController.text, correo: '',
-    );
+    // Validación básica local
+    await Future.delayed(const Duration(milliseconds: 800));
 
     if (!mounted) return;
 
-    if (result['success']) {
-      // ✅ GUARDAR DATOS EN SHARED PREFERENCES
-      final prefs = await SharedPreferences.getInstance();
-      final userData = result['data'];
+    // ✅ GUARDAR DATOS EN SHARED PREFERENCES (simulado)
+    final prefs = await SharedPreferences.getInstance();
+    
+    await prefs.setString('user_id', '1');
+    await prefs.setString('user_email', _correoController.text.trim());
+    await prefs.setString('user_name', 'Usuario');
+    await prefs.setString('user_foto', '');
+    await prefs.setBool('is_logged_in', true);
 
-      await prefs.setString('user_id', userData['id'].toString());
-      await prefs.setString('user_email', userData['correo']);
-      await prefs.setString('user_name', userData['nombre']);
-      await prefs.setString('user_foto', userData['foto_perfil'] ?? '');
-      await prefs.setBool('is_logged_in', true);
+    if (!mounted) return;
 
-      if (!mounted) return;
+    setState(() => _isLoading = false);
 
-      setState(() => _isLoading = false);
-
-      // Mostrar snackbar de bienvenida
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('¡Bienvenido ${userData['nombre']}!'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+    // Mostrar snackbar de bienvenida
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('¡Bienvenido!'),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
         ),
-      );
+      ),
+    );
 
-      // Navegar al MainScreen
-      widget.onLoginSuccess();
-      Navigator.of(context).pushReplacementNamed('/main');
-    } else {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = result['error'] ?? 'Error desconocido al iniciar sesión';
-      });
-    }
+    // Navegar al MainScreen
+    widget.onLoginSuccess();
+    Navigator.of(context).pushReplacementNamed('/main');
   }
 
   @override
@@ -472,11 +448,5 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
         ),
       ),
     );
-  }
-}
-
-extension on bool {
-  bool operator [](String other) {
-    throw UnimplementedError('operator [] is not implemented');
   }
 }
